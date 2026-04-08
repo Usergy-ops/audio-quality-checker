@@ -1,0 +1,12 @@
+# Ignore
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.env
+temp/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+node_modules/

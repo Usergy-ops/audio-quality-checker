@@ -1,0 +1,120 @@
+"""
+Audio Quality Checker - Audio file utilities
+"""
+import os
+import uuid
+import subprocess
+import json
+from pathlib import Path
+
+from app.config import TEMP_DIR, SUPPORTED_EXTENSIONS, MAX_FILE_SIZE_BYTES
+
+
+def validate_file(filename: str, file_size: int) -> tuple[bool, str]:
+    """Validate uploaded file by extension and size."""
+    ext = Path(filename).suffix.lower()
+    
+    if ext not in SUPPORTED_EXTENSIONS:
+        supported = ", ".join(sorted(SUPPORTED_EXTENSIONS))
+        return False, f"Unsupported format '{ext}'. Supported: {supported}"
+    
+    if file_size > MAX_FILE_SIZE_BYTES:
+        max_mb = MAX_FILE_SIZE_BYTES / (1024 * 1024)
+        file_mb = file_size / (1024 * 1024)
+        return False, f"File too large ({file_mb:.1f} MB). Maximum: {max_mb:.0f} MB"
+    
+    return True, ""
+
+
+def save_temp_file(content: bytes, filename: str) -> Path:
+    """Save uploaded file to temp directory with unique name."""
+    ext = Path(filename).suffix.lower()
+    unique_name = f"{uuid.uuid4().hex}{ext}"
+    filepath = TEMP_DIR / unique_name
+    filepath.write_bytes(content)
+    return filepath
+
+
+def cleanup_temp_file(filepath: Path):
+    """Remove temporary file."""
+    try:
+        if filepath and filepath.exists():
+            filepath.unlink()
+    except Exception:
+        pass
+
+
+def convert_to_wav(input_path: Path) -> Path:
+    """Convert any audio format to WAV for consistent processing.
+    Returns path to WAV file (may be same as input if already WAV PCM).
+    """
+    # Check if already WAV
+    if input_path.suffix.lower() == ".wav":
+        # Verify it's actually PCM WAV we can read
+        try:
+            probe = get_ffprobe_info(input_path)
+            if probe and probe.get("codec_name") in ("pcm_s16le", "pcm_s24le", "pcm_s32le", "pcm_f32le"):
+                return input_path
+        except Exception:
+            pass
+    
+    # Convert to WAV
+    wav_path = input_path.with_suffix(".converted.wav")
+    try:
+        subprocess.run(
+            [
+                "ffmpeg", "-y", "-i", str(input_path),
+                "-acodec", "pcm_s16le",
+                "-ar", "44100",
+                "-ac", "1",  # Convert to mono for analysis
+                str(wav_path)
+            ],
+            capture_output=True,
+            timeout=120,
+            check=True
+        )
+        return wav_path
+    except subprocess.CalledProcessError as e:
+        raise ValueError(f"Failed to convert audio: {e.stderr.decode()[:200]}")
+    except subprocess.TimeoutExpired:
+        raise ValueError("Audio conversion timed out (file may be too large or corrupt)")
+
+
+def get_ffprobe_info(filepath: Path) -> dict:
+    """Get raw ffprobe stream info."""
+    try:
+        result = subprocess.run(
+            [
+                "ffprobe", "-v", "quiet",
+                "-print_format", "json",
+                "-show_format", "-show_streams",
+                str(filepath)
+            ],
+            capture_output=True,
+            timeout=30,
+            check=True
+        )
+        return json.loads(result.stdout)
+    except Exception:
+        return {}
+
+
+def format_duration(seconds: float) -> str:
+    """Format seconds to HH:MM:SS.ms"""
+    hours = int(seconds // 3600)
+    minutes = int((seconds % 3600) // 60)
+    secs = seconds % 60
+    if hours > 0:
+        return f"{hours:02d}:{minutes:02d}:{secs:05.2f}"
+    return f"{minutes:02d}:{secs:05.2f}"
+
+
+def format_file_size(size_bytes: int) -> str:
+    """Format bytes to human-readable size."""
+    if size_bytes >= 1024 * 1024 * 1024:
+        return f"{size_bytes / (1024**3):.2f} GB"
+    elif size_bytes >= 1024 * 1024:
+        return f"{size_bytes / (1024**2):.2f} MB"
+    elif size_bytes >= 1024:
+        return f"{size_bytes / 1024:.2f} KB"
+    return f"{size_bytes} bytes"

@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Quality Checker | Free AI-Powered Audio Analysis Tool | UsergyAI</title>
+    <meta name="description" content="Free AI-powered audio quality analysis tool. Check sample rate, SNR, clipping, silence, language detection, speaker count, and get instant quality scores. Supports WAV, MP3, FLAC, OGG, and more.">
+    <meta name="keywords" content="audio quality checker, audio analyzer, WAV analyzer, MP3 quality, SNR checker, clipping detection, speech analysis, language detection, audio QA tool, UsergyAI">
+    <meta name="author" content="UsergyAI">
+    <meta name="robots" content="index, follow">
+    
+    <!-- Open Graph / Social -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Audio Quality Checker | Free AI-Powered Analysis">
+    <meta property="og:description" content="Upload any audio file and get instant quality analysis with AI-powered insights. Free tool by UsergyAI.">
+    <meta property="og:url" content="https://usergy.ai/tools/audio-quality-checker">
+    <meta property="og:site_name" content="UsergyAI">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Audio Quality Checker | Free AI-Powered Analysis">
+    <meta name="twitter:description" content="Upload any audio file and get instant quality analysis with AI-powered insights.">
+    <meta name="twitter:site" content="@UsergyAI">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎵</text></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎵</text></svg>">
+    
+    <!-- Canonical -->
+    <link rel="canonical" href="https://usergy.ai/tools/audio-quality-checker">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-content">
+            <a href="/" class="nav-logo">
+                <span class="logo-icon">🎵</span>
+                <span class="logo-text">Audio Quality Checker</span>
+                <span class="logo-badge">by UsergyAI</span>
+            </a>
+            <div class="nav-links">
+                <a href="#features">Features</a>
+                <a href="#how-it-works">How It Works</a>
+                <a href="https://usergy.ai" target="_blank" class="nav-cta">UsergyAI &rarr;</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-bg">
+            <div class="hero-gradient"></div>
+            <div class="hero-grid"></div>
+        </div>
+        <div class="hero-content">
+            <div class="hero-badge">
+                <span class="badge-dot"></span>
+                AI-Powered Audio Analysis
+            </div>
+            <h1 class="hero-title">
+                Know Your Audio Quality<br>
+                <span class="gradient-text">In Seconds</span>
+            </h1>
+            <p class="hero-subtitle">
+                Upload any audio file. Get instant quality scores, technical metrics, 
+                AI-powered language detection, speech analysis, and beautiful visualizations.
+            </p>
+            
+            <!-- Upload Zone -->
+            <div id="upload-zone" class="upload-zone">
+                <div class="upload-icon">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/>
+                        <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                </div>
+                <p class="upload-text">Drag & drop your audio file here</p>
+                <p class="upload-subtext">or click to browse</p>
+                <p class="upload-formats">WAV, MP3, FLAC, OGG, AAC, M4A, AIFF, OPUS, WebM, WMA, AMR &bull; Up to 1 GB</p>
+                <input type="file" id="file-input" accept=".wav,.mp3,.flac,.ogg,.aac,.m4a,.aiff,.aif,.opus,.webm,.wma,.amr" hidden>
+            </div>
+
+            <!-- Progress Bar (hidden by default) -->
+            <div id="progress-section" class="progress-section hidden">
+                <div class="progress-header">
+                    <span id="progress-filename" class="progress-filename"></span>
+                    <span id="progress-percent" class="progress-percent">0%</span>
+                </div>
+                <div class="progress-bar">
+                    <div id="progress-fill" class="progress-fill"></div>
+                </div>
+                <p id="progress-status" class="progress-status">Uploading...</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Results Section (hidden by default) -->
+    <section id="results-section" class="results-section hidden">
+        <div class="results-container">
+            
+            <!-- Quality Score Card -->
+            <div class="score-card" id="score-card">
+                <div class="score-circle-container">
+                    <svg class="score-ring" viewBox="0 0 120 120">
+                        <circle class="score-ring-bg" cx="60" cy="60" r="54"/>
+                        <circle class="score-ring-fill" id="score-ring-fill" cx="60" cy="60" r="54"/>
+                    </svg>
+                    <div class="score-value">
+                        <span id="score-number" class="score-number">0</span>
+                        <span class="score-max">/100</span>
+                    </div>
+                </div>
+                <div class="score-info">
+                    <div id="score-grade" class="score-grade">-</div>
+                    <p id="score-summary" class="score-summary">Analyzing...</p>
+                </div>
+            </div>
+
+            <!-- File Info -->
+            <div class="result-card" id="file-info-card">
+                <h3 class="card-title">
+                    <span class="card-icon">📄</span> File Information
+                </h3>
+                <div id="file-info-grid" class="info-grid"></div>
+            </div>
+
+            <!-- Signal Analysis -->
+            <div class="result-card" id="signal-card">
+                <h3 class="card-title">
+                    <span class="card-icon">📊</span> Signal Analysis
+                </h3>
+                <div id="signal-grid" class="info-grid"></div>
+            </div>
+
+            <!-- AI Analysis -->
+            <div class="result-card" id="ai-card">
+                <h3 class="card-title">
+                    <span class="card-icon">🤖</span> AI Analysis
+                </h3>
+                <div id="ai-grid" class="info-grid"></div>
+            </div>
+
+            <!-- Quality Breakdown -->
+            <div class="result-card full-width" id="breakdown-card">
+                <h3 class="card-title">
+                    <span class="card-icon">🎯</span> Quality Breakdown
+                </h3>
+                <div id="breakdown-list" class="breakdown-list"></div>
+            </div>
+
+            <!-- Compliance -->
+            <div class="result-card full-width" id="compliance-card">
+                <h3 class="card-title">
+                    <span class="card-icon">✅</span> Compliance Check
+                </h3>
+                <div id="compliance-list" class="compliance-list"></div>
+            </div>
+
+            <!-- Visualizations -->
+            <div class="result-card full-width" id="viz-card">
+                <h3 class="card-title">
+                    <span class="card-icon">📈</span> Visualizations
+                </h3>
+                <div id="viz-container" class="viz-container"></div>
+            </div>
+
+            <!-- Errors (if any) -->
+            <div class="result-card full-width error-card hidden" id="errors-card">
+                <h3 class="card-title">
+                    <span class="card-icon">⚠️</span> Warnings
+                </h3>
+                <div id="errors-list" class="errors-list"></div>
+            </div>
+
+            <!-- Actions -->
+            <div class="results-actions">
+                <button id="btn-download-json" class="btn btn-secondary">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Download JSON Report
+                </button>
+                <button id="btn-new-analysis" class="btn btn-primary">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Analyze Another File
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features-section">
+        <div class="features-container">
+            <h2 class="section-title">Everything You Need to Know About Your Audio</h2>
+            <p class="section-subtitle">Professional-grade analysis powered by AI models and signal processing</p>
+            
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🎚️</div>
+                    <h3>Technical Metrics</h3>
+                    <p>Sample rate, bit depth, codec, duration, channels, bit rate, and file format analysis</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Signal Quality</h3>
+                    <p>Peak amplitude, RMS level, dynamic range, SNR, DC offset, clipping detection</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔇</div>
+                    <h3>Silence Detection</h3>
+                    <p>Find silent regions, calculate silence percentage, longest silent stretch</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🌍</div>
+                    <h3>Language Detection</h3>
+                    <p>AI-powered detection of 99 languages with confidence scores using OpenAI Whisper</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🗣️</div>
+                    <h3>Speech Activity</h3>
+                    <p>Silero VAD detects speech vs noise regions with precise timestamps</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">👥</div>
+                    <h3>Speaker Count</h3>
+                    <p>Pyannote diarization identifies how many speakers and when each talks</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🎯</div>
+                    <h3>Quality Score</h3>
+                    <p>Weighted 0-100 score with A+ to F grading across 9 quality components</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">✅</div>
+                    <h3>Compliance Check</h3>
+                    <p>Pass/warn/fail against common AI data project specifications</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📈</div>
+                    <h3>Visualizations</h3>
+                    <p>Waveform, mel spectrogram, loudness chart, and speaker timeline images</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section id="how-it-works" class="how-section">
+        <div class="how-container">
+            <h2 class="section-title">How It Works</h2>
+            <div class="steps-grid">
+                <div class="step-card">
+                    <div class="step-number">1</div>
+                    <h3>Upload</h3>
+                    <p>Drag and drop or browse for any audio file. Supports 12 formats up to 1 GB.</p>
+                </div>
+                <div class="step-arrow">&rarr;</div>
+                <div class="step-card">
+                    <div class="step-number">2</div>
+                    <h3>Analyze</h3>
+                    <p>Our AI pipeline runs 6 analyzers: metadata, signal, clipping, silence, language, and speech.</p>
+                </div>
+                <div class="step-arrow">&rarr;</div>
+                <div class="step-card">
+                    <div class="step-number">3</div>
+                    <h3>Results</h3>
+                    <p>Get a detailed report with quality score, compliance check, and beautiful visualizations.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <p>Built by <a href="https://usergy.ai" target="_blank">UsergyAI</a> &mdash; AI Data Services for the Real World</p>
+            <p class="footer-sub">Your audio files are processed on our server and deleted immediately after analysis. We don't store your data.</p>
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>

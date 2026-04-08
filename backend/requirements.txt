@@ -1,0 +1,19 @@
+# Core Framework
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+python-multipart==0.0.20
+aiofiles==24.1.0
+
+# Audio Processing
+librosa==0.10.2.post1
+scipy==1.14.1
+numpy==1.26.4
+soundfile==0.13.1
+pydub==0.25.1
+ffmpeg-python==0.2.0
+
+# Visualization
+matplotlib==3.9.4
+
+# Pydantic (comes with FastAPI but pin it)
+pydantic==2.10.4
