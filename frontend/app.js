@@ -112,6 +112,7 @@ async function handleFile(file) {
         // Upload file
         const formData = new FormData();
         formData.append('file', file);
+        formData.append('retain', document.getElementById('retain-checkbox').checked ? 'true' : 'false');
         
         const xhr = new XMLHttpRequest();
         

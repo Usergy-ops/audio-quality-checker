@@ -262,6 +262,57 @@ body {
     color: var(--text-muted);
 }
 
+/* Retain Checkbox */
+.retain-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    cursor: pointer;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    user-select: none;
+}
+
+.retain-label input[type="checkbox"] {
+    display: none;
+}
+
+.retain-checkmark {
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--border-color);
+    border-radius: 4px;
+    flex-shrink: 0;
+    position: relative;
+    transition: var(--transition);
+}
+
+.retain-label input[type="checkbox"]:checked ~ .retain-checkmark {
+    background: var(--electric-teal);
+    border-color: var(--electric-teal);
+}
+
+.retain-label input[type="checkbox"]:checked ~ .retain-checkmark::after {
+    content: '';
+    position: absolute;
+    left: 5px;
+    top: 1px;
+    width: 5px;
+    height: 10px;
+    border: solid var(--bg-dark);
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.retain-text {
+    line-height: 1.4;
+}
+
+.retain-label:hover .retain-checkmark {
+    border-color: var(--electric-teal);
+}
+
 /* Progress Section */
 .progress-section {
     margin-top: 2rem;

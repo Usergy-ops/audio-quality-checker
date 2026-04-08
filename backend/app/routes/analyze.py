@@ -5,27 +5,31 @@ import time
 import traceback
 from pathlib import Path
 
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 
 from app.config import MAX_FILE_SIZE_BYTES
 from app.models.schemas import AnalysisResponse, ErrorResponse
-from app.utils.audio import validate_file, save_temp_file, cleanup_temp_file
+from app.utils.audio import validate_file, save_temp_file, cleanup_temp_file, save_upload
 from app.analyzers.pipeline import run_analysis_pipeline
 
 router = APIRouter()
 
 
 @router.post("/analyze", response_model=AnalysisResponse)
-async def analyze_audio(file: UploadFile = File(...)):
+async def analyze_audio(
+    file: UploadFile = File(...),
+    retain: bool = Form(True),
+):
     """
     Upload an audio file and get a detailed quality analysis report.
     
     Supported formats: WAV, MP3, FLAC, OGG, M4A, AAC, OPUS, WebM, AIFF, WMA, AMR
     Maximum file size: 1 GB
+    
+    retain: If true, file is kept for improving the tool. Default: true.
     """
     start_time = time.time()
     temp_path = None
-    converted_path = None
     
     try:
         # Read file content
@@ -47,6 +51,10 @@ async def analyze_audio(file: UploadFile = File(...)):
             original_filename=file.filename or "unknown",
             file_size=file_size,
         )
+        
+        # Save upload if user consented
+        if retain:
+            save_upload(temp_path, file.filename or "unknown", file_size)
         
         result.processing_time_seconds = round(time.time() - start_time, 2)
         return result

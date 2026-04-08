@@ -84,6 +84,11 @@
                 <p class="upload-text">Drag & drop your audio file here</p>
                 <p class="upload-subtext">or click to browse</p>
                 <p class="upload-formats">WAV, MP3, FLAC, OGG, AAC, M4A, AIFF, OPUS, WebM, WMA, AMR &bull; Up to 1 GB</p>
+                <label class="retain-label" id="retain-label">
+                    <input type="checkbox" id="retain-checkbox" checked>
+                    <span class="retain-checkmark"></span>
+                    <span class="retain-text">Help us improve — your file may be used to enhance our analysis models</span>
+                </label>
                 <input type="file" id="file-input" accept=".wav,.mp3,.flac,.ogg,.aac,.m4a,.aiff,.aif,.opus,.webm,.wma,.amr" hidden>
             </div>
 
@@ -279,7 +284,7 @@
     <footer class="footer">
         <div class="footer-content">
             <p>Built by <a href="https://usergy.ai" target="_blank">UsergyAI</a> &mdash; AI Data Services for the Real World</p>
-            <p class="footer-sub">Your audio files are processed on our server and deleted immediately after analysis. We don't store your data.</p>
+            <p class="footer-sub">Your audio files are processed on our server and deleted after analysis unless you opt in to help improve our models.</p>
         </div>
     </footer>
 

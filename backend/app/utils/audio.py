@@ -7,7 +7,32 @@ import subprocess
 import json
 from pathlib import Path
 
-from app.config import TEMP_DIR, SUPPORTED_EXTENSIONS, MAX_FILE_SIZE_BYTES
+import shutil
+from datetime import datetime
+
+from app.config import TEMP_DIR, UPLOADS_DIR, SUPPORTED_EXTENSIONS, MAX_FILE_SIZE_BYTES
+
+
+def save_upload(temp_path: Path, original_filename: str, file_size: int):
+    """Save uploaded file to permanent uploads directory with metadata."""
+    try:
+        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        ext = Path(original_filename).suffix.lower()
+        safe_name = Path(original_filename).stem[:50]  # Truncate long names
+        save_name = f"{timestamp}_{safe_name}{ext}"
+        dest = UPLOADS_DIR / save_name
+        shutil.copy2(str(temp_path), str(dest))
+        
+        # Save metadata alongside
+        meta_path = dest.with_suffix(dest.suffix + ".meta")
+        meta_path.write_text(json.dumps({
+            "original_filename": original_filename,
+            "file_size": file_size,
+            "uploaded_at": datetime.utcnow().isoformat() + "Z",
+            "saved_as": save_name,
+        }, indent=2))
+    except Exception:
+        pass  # Don't fail analysis if save fails
 
 
 def validate_file(filename: str, file_size: int) -> tuple[bool, str]:
