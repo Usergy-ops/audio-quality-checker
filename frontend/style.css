@@ -127,6 +127,36 @@ body {
     background: #00D9BE !important;
 }
 
+/* Hamburger Menu */
+.nav-hamburger {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+}
+
+.nav-hamburger span {
+    width: 24px;
+    height: 2px;
+    background: var(--text-primary);
+    transition: var(--transition);
+}
+
+.nav-hamburger.active span:nth-child(1) {
+    transform: rotate(45deg) translate(5px, 5px);
+}
+
+.nav-hamburger.active span:nth-child(2) {
+    opacity: 0;
+}
+
+.nav-hamburger.active span:nth-child(3) {
+    transform: rotate(-45deg) translate(5px, -5px);
+}
+
 /* Hero Section */
 .hero {
     position: relative;
@@ -857,6 +887,24 @@ body {
 @media (max-width: 768px) {
     .nav-links {
         display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: rgba(15, 23, 42, 0.95);
+        backdrop-filter: blur(12px);
+        flex-direction: column;
+        padding: 1rem 2rem;
+        gap: 1rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .nav-links.open {
+        display: flex;
+    }
+    
+    .nav-hamburger {
+        display: flex;
     }
     
     .hero {

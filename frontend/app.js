@@ -11,6 +11,7 @@ const API_BASE = window.location.hostname === 'localhost' || window.location.hos
 // DOM Elements
 const uploadZone = document.getElementById('upload-zone');
 const fileInput = document.getElementById('file-input');
+const retainLabel = document.getElementById('retain-label');
 const progressSection = document.getElementById('progress-section');
 const progressFilename = document.getElementById('progress-filename');
 const progressPercent = document.getElementById('progress-percent');
@@ -22,11 +23,45 @@ const btnNewAnalysis = document.getElementById('btn-new-analysis');
 
 // State
 let currentResult = null;
+let stageInterval = null;
+
+// Analysis stage messages
+const ANALYSIS_STAGES = [
+    'Extracting file metadata...',
+    'Analyzing signal quality...',
+    'Checking for clipping & silence...',
+    'Calculating signal-to-noise ratio...',
+    'Running AI language detection...',
+    'Detecting speech activity...',
+    'Counting speakers...',
+    'Computing quality score...',
+    'Generating visualizations...',
+    'Almost done...',
+];
+
+function startAnalysisStages() {
+    let stageIndex = 0;
+    if (stageInterval) clearInterval(stageInterval);
+    stageInterval = setInterval(() => {
+        if (stageIndex < ANALYSIS_STAGES.length) {
+            progressStatus.innerHTML = `<span class="spinner"></span>${ANALYSIS_STAGES[stageIndex]}`;
+            stageIndex++;
+        }
+    }, 1500);
+}
+
+function stopAnalysisStages() {
+    if (stageInterval) {
+        clearInterval(stageInterval);
+        stageInterval = null;
+    }
+}
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     setupUploadZone();
     setupButtons();
+    setupMobileNav();
     addSVGGradient();
 });
 
@@ -43,6 +78,26 @@ function addSVGGradient() {
         </linearGradient>
     `;
     svg.insertBefore(defs, svg.firstChild);
+}
+
+// Mobile Navigation
+function setupMobileNav() {
+    const hamburger = document.getElementById('nav-hamburger');
+    const navLinks = document.getElementById('nav-links');
+    if (!hamburger || !navLinks) return;
+    
+    hamburger.addEventListener('click', () => {
+        hamburger.classList.toggle('active');
+        navLinks.classList.toggle('open');
+    });
+    
+    // Close menu when a link is clicked
+    navLinks.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', () => {
+            hamburger.classList.remove('active');
+            navLinks.classList.remove('open');
+        });
+    });
 }
 
 // Upload Zone Setup
@@ -102,8 +157,9 @@ async function handleFile(file) {
     
     // Show progress
     uploadZone.classList.add('hidden');
+    retainLabel.classList.add('hidden');
     progressSection.classList.remove('hidden');
-    progressFilename.textContent = file.name;
+    progressFilename.textContent = `${file.name} (${formatFileSize(file.size)})`;
     progressPercent.textContent = '0%';
     progressFill.style.width = '0%';
     progressStatus.textContent = 'Uploading...';
@@ -125,6 +181,8 @@ async function handleFile(file) {
                 
                 if (percent === 100) {
                     progressStatus.innerHTML = '<span class="spinner"></span>Analyzing... This may take a moment.';
+                    // Cycle through staged status messages
+                    startAnalysisStages();
                 }
             }
         });
@@ -153,7 +211,12 @@ async function handleFile(file) {
             showError('Network error. Please check your connection.');
         });
         
+        xhr.addEventListener('timeout', () => {
+            showError('Analysis timed out. Try a smaller file or try again later.');
+        });
+        
         xhr.open('POST', `${API_BASE}/api/analyze`);
+        xhr.timeout = 300000; // 5 minutes
         xhr.send(formData);
         
     } catch (error) {
@@ -163,6 +226,7 @@ async function handleFile(file) {
 
 // Display results
 function displayResults(result) {
+    stopAnalysisStages();
     progressSection.classList.add('hidden');
     resultsSection.classList.remove('hidden');
     
@@ -200,12 +264,22 @@ function renderQualityScore(quality) {
     const grade = quality?.grade ?? '-';
     const summary = quality?.summary ?? 'Unable to calculate score';
     
+    // Determine ring color based on score
+    let ringColor;
+    if (score >= 80) ringColor = '#10B981';      // Green - A/A+
+    else if (score >= 70) ringColor = '#00BFA6';  // Teal - B
+    else if (score >= 60) ringColor = '#F59E0B';  // Yellow - C
+    else ringColor = '#EF4444';                    // Red - D/F
+    
+    // Update SVG gradient to solid color for the ring
+    const ring = document.getElementById('score-ring-fill');
+    ring.style.stroke = ringColor;
+    
     // Animate score number
     const scoreNumber = document.getElementById('score-number');
     animateNumber(scoreNumber, 0, score, 1000);
     
     // Animate ring
-    const ring = document.getElementById('score-ring-fill');
     const circumference = 339.292;
     const offset = circumference - (score / 100) * circumference;
     setTimeout(() => {
@@ -226,14 +300,14 @@ function renderFileInfo(metadata) {
     }
     
     const items = [
-        { label: 'Format', value: metadata.format?.toUpperCase() || '-' },
+        { label: 'Format', value: metadata.format || '-' },
         { label: 'Codec', value: metadata.codec || '-' },
-        { label: 'Duration', value: formatDuration(metadata.duration) },
+        { label: 'Duration', value: metadata.duration_formatted || formatDuration(metadata.duration_seconds) },
         { label: 'Sample Rate', value: metadata.sample_rate ? `${metadata.sample_rate.toLocaleString()} Hz` : '-' },
         { label: 'Bit Depth', value: metadata.bit_depth ? `${metadata.bit_depth}-bit` : '-' },
         { label: 'Bit Rate', value: metadata.bit_rate ? `${Math.round(metadata.bit_rate / 1000)} kbps` : '-' },
         { label: 'Channels', value: metadata.channels ? (metadata.channels === 1 ? 'Mono' : metadata.channels === 2 ? 'Stereo' : `${metadata.channels}ch`) : '-' },
-        { label: 'File Size', value: formatFileSize(metadata.file_size) },
+        { label: 'File Size', value: metadata.file_size_formatted || formatFileSize(metadata.file_size_bytes) },
     ];
     
     grid.innerHTML = items.map(item => `
@@ -358,12 +432,26 @@ function renderQualityBreakdown(quality) {
         return;
     }
     
+    // Tooltip explanations for components
+    const tooltips = {
+        'SNR (Signal-to-Noise)': 'How much louder the audio signal is compared to background noise',
+        'Clipping': 'Whether the audio is distorted from being too loud',
+        'Silence Ratio': 'How much of the recording is silent',
+        'Sample Rate': 'How many audio samples per second (higher = better quality)',
+        'Bit Depth': 'Resolution of each audio sample (higher = more detail)',
+        'Dynamic Range': 'Difference between the quietest and loudest parts',
+        'DC Offset': 'Whether the audio signal is centered correctly',
+        'Speech Clarity': 'How clear and intelligible speech is in the recording',
+        'Format Quality': 'Whether the file uses a lossless or high-quality format',
+    };
+    
     list.innerHTML = breakdown.map(item => {
         const score = item.score ?? 0;
         const level = score >= 80 ? 'excellent' : score >= 60 ? 'good' : score >= 40 ? 'fair' : 'poor';
         const weight = (item.weight * 100).toFixed(0);
+        const tip = tooltips[item.component] || item.detail || '';
         return `
-            <div class="breakdown-item">
+            <div class="breakdown-item" title="${tip}">
                 <span class="breakdown-name">${item.component} (${weight}%)</span>
                 <div class="breakdown-bar-container">
                     <div class="breakdown-bar ${level}" style="width: ${score}%"></div>
@@ -400,10 +488,11 @@ function renderCompliance(compliance) {
 
 // Render Visualizations
 function renderVisualizations(viz) {
+    const card = document.getElementById('viz-card');
     const container = document.getElementById('viz-container');
     
     if (!viz) {
-        container.innerHTML = '<p class="info-value">Visualizations unavailable</p>';
+        card.classList.add('hidden');
         return;
     }
     
@@ -414,11 +503,18 @@ function renderVisualizations(viz) {
         { key: 'speakers', label: 'Speaker Timeline' },
     ];
     
-    container.innerHTML = items
-        .filter(item => viz[item.key])
+    const visibleItems = items.filter(item => viz[item.key]);
+    
+    if (visibleItems.length === 0) {
+        card.classList.add('hidden');
+        return;
+    }
+    
+    card.classList.remove('hidden');
+    container.innerHTML = visibleItems
         .map(item => `
             <div class="viz-item">
-                <img src="data:image/png;base64,${viz[item.key]}" alt="${item.label}">
+                <img src="data:image/png;base64,${viz[item.key]}" alt="${item.label}" loading="lazy">
                 <div class="viz-label">${item.label}</div>
             </div>
         `).join('');
@@ -447,7 +543,18 @@ function renderErrors(errors) {
 function downloadJson() {
     if (!currentResult) return;
     
-    const blob = new Blob([JSON.stringify(currentResult, null, 2)], { type: 'application/json' });
+    // Create a clean copy without base64 visualization data
+    const cleanResult = JSON.parse(JSON.stringify(currentResult));
+    if (cleanResult.visualizations) {
+        const vizKeys = Object.keys(cleanResult.visualizations);
+        vizKeys.forEach(key => {
+            if (cleanResult.visualizations[key]) {
+                cleanResult.visualizations[key] = '[base64 image omitted]';
+            }
+        });
+    }
+    
+    const blob = new Blob([JSON.stringify(cleanResult, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -466,6 +573,7 @@ function resetUI() {
     resultsSection.classList.add('hidden');
     progressSection.classList.add('hidden');
     uploadZone.classList.remove('hidden');
+    retainLabel.classList.remove('hidden');
     
     // Scroll to top
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -473,8 +581,10 @@ function resetUI() {
 
 // Show error message
 function showError(message) {
+    stopAnalysisStages();
     progressSection.classList.add('hidden');
     uploadZone.classList.remove('hidden');
+    retainLabel.classList.remove('hidden');
     
     // Create temporary error toast
     const toast = document.createElement('div');
