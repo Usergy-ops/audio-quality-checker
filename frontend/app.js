@@ -1,14 +1,10 @@
-/**
- * Audio Quality Checker - Frontend Application
- * Handles file upload, API communication, and results rendering
- */
+/* ── Audio Quality Checker — Frontend Logic ────────
+   All backend integration intact. New DOM structure.
+───────────────────────────────────────────────────── */
 
-// API Configuration
-const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:8000'
-    : window.location.origin;
+const API_BASE = window.location.origin;
 
-// DOM Elements
+// DOM
 const uploadZone = document.getElementById('upload-zone');
 const fileInput = document.getElementById('file-input');
 const retainLabel = document.getElementById('retain-label');
@@ -18,20 +14,17 @@ const progressPercent = document.getElementById('progress-percent');
 const progressFill = document.getElementById('progress-fill');
 const progressStatus = document.getElementById('progress-status');
 const resultsSection = document.getElementById('results-section');
-const btnDownloadJson = document.getElementById('btn-download-json');
-const btnNewAnalysis = document.getElementById('btn-new-analysis');
 
 // State
 let currentResult = null;
 let stageInterval = null;
 
-// Analysis stage messages
 const ANALYSIS_STAGES = [
     'Extracting file metadata...',
     'Analyzing signal quality...',
-    'Checking for clipping & silence...',
+    'Checking for clipping and silence...',
     'Calculating signal-to-noise ratio...',
-    'Running AI language detection...',
+    'Running language detection...',
     'Detecting speech activity...',
     'Counting speakers...',
     'Computing quality score...',
@@ -39,522 +32,389 @@ const ANALYSIS_STAGES = [
     'Almost done...',
 ];
 
-function startAnalysisStages() {
-    let stageIndex = 0;
+function startStages() {
+    let i = 0;
     if (stageInterval) clearInterval(stageInterval);
     stageInterval = setInterval(() => {
-        if (stageIndex < ANALYSIS_STAGES.length) {
-            progressStatus.innerHTML = `<span class="spinner"></span>${ANALYSIS_STAGES[stageIndex]}`;
-            stageIndex++;
+        if (i < ANALYSIS_STAGES.length) {
+            progressStatus.innerHTML = `<span class="spinner"></span>${ANALYSIS_STAGES[i]}`;
+            i++;
         }
     }, 1500);
 }
 
-function stopAnalysisStages() {
-    if (stageInterval) {
-        clearInterval(stageInterval);
-        stageInterval = null;
-    }
+function stopStages() {
+    if (stageInterval) { clearInterval(stageInterval); stageInterval = null; }
 }
 
-// Initialize
-document.addEventListener('DOMContentLoaded', () => {
-    setupUploadZone();
-    setupButtons();
-    setupMobileNav();
-    addSVGGradient();
-});
 
-// Add SVG gradient for score ring
-function addSVGGradient() {
-    const svg = document.querySelector('.score-ring');
-    if (!svg) return;
-    
-    const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-    defs.innerHTML = `
-        <linearGradient id="score-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" style="stop-color:#00BFA6"/>
-            <stop offset="100%" style="stop-color:#F5A623"/>
-        </linearGradient>
-    `;
-    svg.insertBefore(defs, svg.firstChild);
-}
+// ── Mobile Nav ──────────────────────────────────────
 
-// Mobile Navigation
 function setupMobileNav() {
-    const hamburger = document.getElementById('nav-hamburger');
-    const navLinks = document.getElementById('nav-links');
-    if (!hamburger || !navLinks) return;
-    
-    hamburger.addEventListener('click', () => {
-        hamburger.classList.toggle('active');
-        navLinks.classList.toggle('open');
-    });
-    
-    // Close menu when a link is clicked
-    navLinks.querySelectorAll('a').forEach(link => {
-        link.addEventListener('click', () => {
-            hamburger.classList.remove('active');
-            navLinks.classList.remove('open');
-        });
-    });
+    const toggle = document.getElementById('nav-toggle');
+    const links = document.getElementById('nav-links');
+    if (!toggle || !links) return;
+
+    toggle.addEventListener('click', () => links.classList.toggle('open'));
+    links.querySelectorAll('a').forEach(a =>
+        a.addEventListener('click', () => links.classList.remove('open'))
+    );
 }
 
-// Upload Zone Setup
-function setupUploadZone() {
-    // Click to browse
+
+// ── Upload ──────────────────────────────────────────
+
+function setupUpload() {
     uploadZone.addEventListener('click', () => fileInput.click());
-    
-    // File selection
-    fileInput.addEventListener('change', (e) => {
-        if (e.target.files.length > 0) {
-            handleFile(e.target.files[0]);
-        }
-    });
-    
-    // Drag and drop
-    uploadZone.addEventListener('dragover', (e) => {
+
+    uploadZone.addEventListener('dragover', e => {
         e.preventDefault();
         uploadZone.classList.add('dragover');
     });
-    
-    uploadZone.addEventListener('dragleave', (e) => {
+
+    uploadZone.addEventListener('dragleave', () =>
+        uploadZone.classList.remove('dragover')
+    );
+
+    uploadZone.addEventListener('drop', e => {
         e.preventDefault();
         uploadZone.classList.remove('dragover');
+        if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
     });
-    
-    uploadZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        uploadZone.classList.remove('dragover');
-        if (e.dataTransfer.files.length > 0) {
-            handleFile(e.dataTransfer.files[0]);
-        }
+
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files.length) handleFile(fileInput.files[0]);
     });
 }
 
-// Button Setup
-function setupButtons() {
-    btnDownloadJson.addEventListener('click', downloadJson);
-    btnNewAnalysis.addEventListener('click', resetUI);
-}
 
-// Handle file upload
-async function handleFile(file) {
-    // Validate file type
-    const validExtensions = ['.wav', '.mp3', '.flac', '.ogg', '.aac', '.m4a', '.aiff', '.aif', '.opus', '.webm', '.wma', '.amr'];
-    const ext = '.' + file.name.split('.').pop().toLowerCase();
-    
-    if (!validExtensions.includes(ext)) {
-        showError(`Unsupported file format: ${ext}. Supported: ${validExtensions.join(', ')}`);
+function handleFile(file) {
+    // Validate size
+    if (file.size > 1073741824) {
+        alert('File too large. Maximum is 1 GB.');
         return;
     }
-    
-    // Check file size (1 GB limit)
-    if (file.size > 1024 * 1024 * 1024) {
-        showError('File too large. Maximum size is 1 GB.');
-        return;
-    }
-    
+
+    const retain = document.getElementById('retain-checkbox').checked;
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('retain', retain.toString());
+
     // Show progress
     uploadZone.classList.add('hidden');
     retainLabel.classList.add('hidden');
     progressSection.classList.remove('hidden');
-    progressFilename.textContent = `${file.name} (${formatFileSize(file.size)})`;
+    progressFilename.textContent = `${file.name} (${fmtSize(file.size)})`;
     progressPercent.textContent = '0%';
     progressFill.style.width = '0%';
     progressStatus.textContent = 'Uploading...';
-    
-    try {
-        // Upload file
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('retain', document.getElementById('retain-checkbox').checked ? 'true' : 'false');
-        
-        const xhr = new XMLHttpRequest();
-        
-        // Track upload progress
-        xhr.upload.addEventListener('progress', (e) => {
-            if (e.lengthComputable) {
-                const percent = Math.round((e.loaded / e.total) * 100);
-                progressPercent.textContent = `${percent}%`;
-                progressFill.style.width = `${percent}%`;
-                
-                if (percent === 100) {
-                    progressStatus.innerHTML = '<span class="spinner"></span>Analyzing... This may take a moment.';
-                    // Cycle through staged status messages
-                    startAnalysisStages();
-                }
-            }
-        });
-        
-        // Handle response
-        xhr.addEventListener('load', () => {
-            if (xhr.status === 200) {
-                try {
-                    const result = JSON.parse(xhr.responseText);
-                    currentResult = result;
-                    displayResults(result);
-                } catch (e) {
-                    showError('Failed to parse server response.');
-                }
-            } else {
-                try {
-                    const error = JSON.parse(xhr.responseText);
-                    showError(error.detail || 'Analysis failed.');
-                } catch (e) {
-                    showError(`Server error: ${xhr.status}`);
-                }
-            }
-        });
-        
-        xhr.addEventListener('error', () => {
-            showError('Network error. Please check your connection.');
-        });
-        
-        xhr.addEventListener('timeout', () => {
-            showError('Analysis timed out. Try a smaller file or try again later.');
-        });
-        
-        xhr.open('POST', `${API_BASE}/api/analyze`);
-        xhr.timeout = 300000; // 5 minutes
-        xhr.send(formData);
-        
-    } catch (error) {
-        showError(`Upload failed: ${error.message}`);
-    }
+
+    const xhr = new XMLHttpRequest();
+
+    xhr.upload.addEventListener('progress', e => {
+        if (!e.lengthComputable) return;
+        const pct = Math.round((e.loaded / e.total) * 100);
+        progressPercent.textContent = pct + '%';
+        progressFill.style.width = pct + '%';
+        if (pct === 100) {
+            progressStatus.innerHTML = '<span class="spinner"></span>Analyzing...';
+            startStages();
+        }
+    });
+
+    xhr.addEventListener('load', () => {
+        stopStages();
+        if (xhr.status === 200) {
+            try {
+                currentResult = JSON.parse(xhr.responseText);
+                showResults(currentResult);
+            } catch { showError('Invalid response from server.'); }
+        } else {
+            try {
+                const err = JSON.parse(xhr.responseText);
+                showError(err.detail || err.error || 'Analysis failed.');
+            } catch { showError(`Server error (${xhr.status}).`); }
+        }
+    });
+
+    xhr.addEventListener('error', () => showError('Network error. Check your connection.'));
+    xhr.addEventListener('timeout', () => showError('Analysis timed out. Try a smaller file.'));
+
+    xhr.open('POST', `${API_BASE}/api/analyze`);
+    xhr.timeout = 300000;
+    xhr.send(formData);
 }
 
-// Display results
-function displayResults(result) {
-    stopAnalysisStages();
+
+// ── Results ─────────────────────────────────────────
+
+function showResults(r) {
     progressSection.classList.add('hidden');
     resultsSection.classList.remove('hidden');
-    
-    // Scroll to results
-    resultsSection.scrollIntoView({ behavior: 'smooth' });
-    
-    // Quality Score
-    renderQualityScore(result.quality);
-    
-    // File Info
-    renderFileInfo(result.file_info);
-    
-    // Signal Analysis
-    renderSignalAnalysis(result);
-    
-    // AI Analysis
-    renderAIAnalysis(result);
-    
-    // Quality Breakdown
-    renderQualityBreakdown(result.quality);
-    
-    // Compliance
-    renderCompliance(result.compliance);
-    
-    // Visualizations
-    renderVisualizations(result.visualizations);
-    
-    // Errors/Warnings
-    renderErrors(result.errors);
+
+    renderScore(r.quality);
+    renderFileInfo(r.file_info);
+    renderSignal(r.signal_analysis);
+    renderAI(r.ai_analysis);
+    renderBreakdown(r.quality);
+    renderCompliance(r.compliance);
+    renderViz(r.visualizations);
+    renderErrors(r.errors);
 }
 
-// Render Quality Score
-function renderQualityScore(quality) {
-    const score = quality?.score ?? 0;
-    const grade = quality?.grade ?? '-';
-    const summary = quality?.summary ?? 'Unable to calculate score';
-    
-    // Determine ring color based on score
-    let ringColor;
-    if (score >= 80) ringColor = '#10B981';      // Green - A/A+
-    else if (score >= 70) ringColor = '#00BFA6';  // Teal - B
-    else if (score >= 60) ringColor = '#F59E0B';  // Yellow - C
-    else ringColor = '#EF4444';                    // Red - D/F
-    
-    // Update SVG gradient to solid color for the ring
+
+// Score
+
+function renderScore(q) {
+    if (!q) return;
+    const score = q.score ?? 0;
+    const grade = q.grade ?? '-';
+
+    // Ring color by score
+    let color;
+    if (score >= 80) color = '#2e7d32';
+    else if (score >= 70) color = '#00897B';
+    else if (score >= 60) color = '#e65100';
+    else color = '#c62828';
+
     const ring = document.getElementById('score-ring-fill');
-    ring.style.stroke = ringColor;
-    
-    // Animate score number
-    const scoreNumber = document.getElementById('score-number');
-    animateNumber(scoreNumber, 0, score, 1000);
-    
-    // Animate ring
-    const circumference = 339.292;
-    const offset = circumference - (score / 100) * circumference;
-    setTimeout(() => {
-        ring.style.strokeDashoffset = offset;
-    }, 100);
-    
-    // Grade and summary
-    document.getElementById('score-grade').textContent = grade;
-    document.getElementById('score-summary').textContent = summary;
+    ring.style.stroke = color;
+
+    const circ = 2 * Math.PI * 52; // r=52
+    setTimeout(() => { ring.style.strokeDashoffset = circ - (score / 100) * circ; }, 80);
+
+    animateNum(document.getElementById('score-number'), 0, score, 900);
+
+    const gradeEl = document.getElementById('score-grade');
+    gradeEl.textContent = grade;
+    gradeEl.style.color = color;
+
+    document.getElementById('score-summary').textContent = q.summary || '';
 }
 
-// Render File Info
-function renderFileInfo(metadata) {
-    const grid = document.getElementById('file-info-grid');
-    if (!metadata) {
-        grid.innerHTML = '<p class="info-value">Metadata unavailable</p>';
-        return;
-    }
-    
-    const items = [
-        { label: 'Format', value: metadata.format || '-' },
-        { label: 'Codec', value: metadata.codec || '-' },
-        { label: 'Duration', value: metadata.duration_formatted || formatDuration(metadata.duration_seconds) },
-        { label: 'Sample Rate', value: metadata.sample_rate ? `${metadata.sample_rate.toLocaleString()} Hz` : '-' },
-        { label: 'Bit Depth', value: metadata.bit_depth ? `${metadata.bit_depth}-bit` : '-' },
-        { label: 'Bit Rate', value: metadata.bit_rate ? `${Math.round(metadata.bit_rate / 1000)} kbps` : '-' },
-        { label: 'Channels', value: metadata.channels ? (metadata.channels === 1 ? 'Mono' : metadata.channels === 2 ? 'Stereo' : `${metadata.channels}ch`) : '-' },
-        { label: 'File Size', value: metadata.file_size_formatted || formatFileSize(metadata.file_size_bytes) },
-    ];
-    
-    grid.innerHTML = items.map(item => `
-        <div class="info-item">
-            <span class="info-label">${item.label}</span>
-            <span class="info-value">${item.value}</span>
-        </div>
-    `).join('');
-}
-
-// Render Signal Analysis
-function renderSignalAnalysis(result) {
-    const grid = document.getElementById('signal-grid');
-    
-    const signal = result.signal_analysis || {};
-    const clipping = signal.clipping || {};
-    const silence = signal.silence || {};
-    const snr = { snr_db: signal.snr_db, noise_floor_db: signal.noise_floor_db };
-    
-    const items = [
-        { 
-            label: 'Peak Amplitude', 
-            value: signal.peak_amplitude_db != null ? `${signal.peak_amplitude_db.toFixed(1)} dB` : '-',
-            quality: signal.peak_amplitude_db > -3 ? 'bad' : signal.peak_amplitude_db > -6 ? 'warn' : 'good'
-        },
-        { 
-            label: 'RMS Level', 
-            value: signal.rms_level_db != null ? `${signal.rms_level_db.toFixed(1)} dB` : '-',
-            quality: 'neutral'
-        },
-        { 
-            label: 'Dynamic Range', 
-            value: signal.dynamic_range_db != null ? `${signal.dynamic_range_db.toFixed(1)} dB` : '-',
-            quality: signal.dynamic_range_db > 20 ? 'good' : signal.dynamic_range_db > 10 ? 'warn' : 'bad'
-        },
-        { 
-            label: 'DC Offset', 
-            value: signal.dc_offset != null ? `${(Math.abs(signal.dc_offset) * 100).toFixed(3)}%` : '-',
-            quality: Math.abs(signal.dc_offset || 0) < 0.01 ? 'good' : Math.abs(signal.dc_offset || 0) < 0.05 ? 'warn' : 'bad'
-        },
-        { 
-            label: 'Clipping', 
-            value: clipping.percentage != null ? `${clipping.percentage.toFixed(2)}%` : '-',
-            quality: (clipping.percentage || 0) < 0.01 ? 'good' : (clipping.percentage || 0) < 1 ? 'warn' : 'bad'
-        },
-        { 
-            label: 'Silence', 
-            value: silence.percentage != null ? `${silence.percentage.toFixed(1)}%` : '-',
-            quality: (silence.percentage || 0) < 20 ? 'good' : (silence.percentage || 0) < 40 ? 'warn' : 'bad'
-        },
-        { 
-            label: 'SNR', 
-            value: snr.snr_db != null ? `${snr.snr_db.toFixed(1)} dB` : '-',
-            quality: (snr.snr_db || 0) > 30 ? 'good' : (snr.snr_db || 0) > 15 ? 'warn' : 'bad'
-        },
-        { 
-            label: 'Noise Floor', 
-            value: snr.noise_floor_db != null ? `${snr.noise_floor_db.toFixed(1)} dB` : '-',
-            quality: 'neutral'
-        },
-    ];
-    
-    grid.innerHTML = items.map(item => `
-        <div class="info-item">
-            <span class="info-label">${item.label}</span>
-            <span class="info-value ${item.quality}">${item.value}</span>
-        </div>
-    `).join('');
-}
-
-// Render AI Analysis
-function renderAIAnalysis(result) {
-    const grid = document.getElementById('ai-grid');
-    
-    const aiData = result.ai_analysis || {};
-    const language = aiData.language || {};
-    const speech = aiData.speech_activity || {};
-    const speakers = aiData.speakers || {};
-    
-    const items = [
-        { 
-            label: 'Language', 
-            value: language.detected ? `${language.name || language.detected} (${language.confidence?.toFixed(0)}%)` : 'Unknown'
-        },
-        { 
-            label: 'Alt Languages', 
-            value: language.alternatives?.length ? language.alternatives.slice(0, 2).map(a => a.name || a.language).join(', ') : '-'
-        },
-        { 
-            label: 'Speech Detected', 
-            value: speech.speech_percentage != null ? (speech.speech_percentage > 0 ? 'Yes' : 'No') : '-'
-        },
-        { 
-            label: 'Speech %', 
-            value: speech.speech_percentage != null ? `${speech.speech_percentage.toFixed(1)}%` : '-'
-        },
-        { 
-            label: 'Longest Speech', 
-            value: speech.longest_speech_seconds != null ? formatDuration(speech.longest_speech_seconds) : '-'
-        },
-        { 
-            label: 'Speaker Count', 
-            value: speakers.count != null ? speakers.count : '-'
-        },
-    ];
-    
-    grid.innerHTML = items.map(item => `
-        <div class="info-item">
-            <span class="info-label">${item.label}</span>
-            <span class="info-value">${item.value}</span>
-        </div>
-    `).join('');
-}
-
-// Render Quality Breakdown
-function renderQualityBreakdown(quality) {
-    const list = document.getElementById('breakdown-list');
-    const breakdown = quality?.breakdown || [];
-    
-    if (!Array.isArray(breakdown) || breakdown.length === 0) {
-        list.innerHTML = '<p class="info-value">No breakdown available</p>';
-        return;
-    }
-    
-    // Tooltip explanations for components
-    const tooltips = {
-        'SNR (Signal-to-Noise)': 'How much louder the audio signal is compared to background noise',
-        'Clipping': 'Whether the audio is distorted from being too loud',
-        'Silence Ratio': 'How much of the recording is silent',
-        'Sample Rate': 'How many audio samples per second (higher = better quality)',
-        'Bit Depth': 'Resolution of each audio sample (higher = more detail)',
-        'Dynamic Range': 'Difference between the quietest and loudest parts',
-        'DC Offset': 'Whether the audio signal is centered correctly',
-        'Speech Clarity': 'How clear and intelligible speech is in the recording',
-        'Format Quality': 'Whether the file uses a lossless or high-quality format',
+function animateNum(el, from, to, ms) {
+    const start = performance.now();
+    const step = t => {
+        const p = Math.min((t - start) / ms, 1);
+        el.textContent = Math.round(from + (to - from) * p);
+        if (p < 1) requestAnimationFrame(step);
     };
-    
-    list.innerHTML = breakdown.map(item => {
-        const score = item.score ?? 0;
-        const level = score >= 80 ? 'excellent' : score >= 60 ? 'good' : score >= 40 ? 'fair' : 'poor';
-        const weight = (item.weight * 100).toFixed(0);
-        const tip = tooltips[item.component] || item.detail || '';
-        return `
-            <div class="breakdown-item" title="${tip}">
-                <span class="breakdown-name">${item.component} (${weight}%)</span>
-                <div class="breakdown-bar-container">
-                    <div class="breakdown-bar ${level}" style="width: ${score}%"></div>
-                </div>
-                <span class="breakdown-score">${score.toFixed(0)}</span>
-            </div>
-        `;
-    }).join('');
+    requestAnimationFrame(step);
 }
 
-// Render Compliance
-function renderCompliance(compliance) {
-    const list = document.getElementById('compliance-list');
-    const checks = compliance?.checks || [];
-    
-    if (checks.length === 0) {
-        list.innerHTML = '<p class="info-value">No compliance data available</p>';
-        return;
+
+// File info
+
+function renderFileInfo(m) {
+    if (!m) return;
+    const items = [
+        ['Format', m.format || '-'],
+        ['Codec', m.codec || '-'],
+        ['Duration', m.duration_formatted || fmtDur(m.duration_seconds)],
+        ['Sample Rate', m.sample_rate ? `${m.sample_rate.toLocaleString()} Hz` : '-'],
+        ['Bit Depth', m.bit_depth ? `${m.bit_depth}-bit` : '-'],
+        ['Bit Rate', m.bit_rate ? `${Math.round(m.bit_rate / 1000)} kbps` : '-'],
+        ['Channels', m.channels ? (m.channels === 1 ? 'Mono' : m.channels === 2 ? 'Stereo' : `${m.channels}ch`) : '-'],
+        ['File Size', m.file_size_formatted || fmtSize(m.file_size_bytes)],
+    ];
+    document.getElementById('file-info-grid').innerHTML = items.map(toDataItem).join('');
+}
+
+
+// Signal
+
+function renderSignal(s) {
+    if (!s) return;
+    const items = [];
+
+    if (s.levels) {
+        const l = s.levels;
+        items.push(
+            ['Peak Level', l.peak_db != null ? `${l.peak_db.toFixed(1)} dB` : '-'],
+            ['RMS Level', l.rms_db != null ? `${l.rms_db.toFixed(1)} dB` : '-'],
+            ['Dynamic Range', l.dynamic_range_db != null ? `${l.dynamic_range_db.toFixed(1)} dB` : '-'],
+        );
     }
-    
-    list.innerHTML = checks.map(check => {
-        const icon = check.status === 'pass' ? '✅' : check.status === 'warn' ? '⚠️' : '❌';
+
+    if (s.noise) {
+        items.push(['SNR', s.noise.snr_db != null ? `${s.noise.snr_db.toFixed(1)} dB` : '-']);
+    }
+
+    if (s.clipping) {
+        const c = s.clipping;
+        items.push(
+            ['Clipping', c.has_clipping ? 'Detected' : 'None', c.has_clipping ? 'bad' : 'good'],
+            ['Clipped Samples', c.clipped_samples != null ? c.clipped_samples.toLocaleString() : '-'],
+        );
+    }
+
+    if (s.silence) {
+        items.push(
+            ['Silence', `${(s.silence.silence_percentage ?? 0).toFixed(1)}%`],
+            ['Longest Silent', s.silence.longest_silence_seconds != null ? `${s.silence.longest_silence_seconds.toFixed(1)}s` : '-'],
+        );
+    }
+
+    if (s.dc_offset != null) {
+        items.push(['DC Offset', s.dc_offset.toFixed(4)]);
+    }
+
+    document.getElementById('signal-grid').innerHTML = items.map(i => toDataItem(i)).join('');
+}
+
+
+// AI analysis
+
+function renderAI(a) {
+    if (!a) return;
+    const items = [];
+
+    if (a.language) {
+        const l = a.language;
+        items.push(
+            ['Language', l.language || '-'],
+            ['Confidence', l.confidence != null ? `${(l.confidence * 100).toFixed(0)}%` : '-'],
+        );
+    }
+
+    if (a.speech_activity) {
+        const sa = a.speech_activity;
+        items.push(
+            ['Speech', `${(sa.speech_percentage ?? 0).toFixed(1)}%`],
+            ['Segments', sa.speech_segments != null ? sa.speech_segments : '-'],
+        );
+    }
+
+    if (a.speakers) {
+        items.push(['Speakers', a.speakers.count != null ? a.speakers.count : '-']);
+    }
+
+    document.getElementById('ai-grid').innerHTML = items.map(toDataItem).join('');
+}
+
+
+// Breakdown
+
+function renderBreakdown(q) {
+    const list = document.getElementById('breakdown-list');
+    const bd = q?.breakdown || [];
+    if (!bd.length) { list.innerHTML = '<p style="color:var(--text-3)">No breakdown available</p>'; return; }
+
+    const tips = {
+        'SNR (Signal-to-Noise)': 'How loud the signal is vs. background noise',
+        'Clipping': 'Whether audio is distorted from being too loud',
+        'Silence Ratio': 'How much of the recording is silent',
+        'Sample Rate': 'Audio samples per second (higher = better)',
+        'Bit Depth': 'Resolution of each sample (higher = more detail)',
+        'Dynamic Range': 'Spread between quietest and loudest parts',
+        'DC Offset': 'Whether the signal is centered correctly',
+        'Speech Clarity': 'How clear and intelligible speech is',
+        'Format Quality': 'Whether the format is lossless or high-quality',
+    };
+
+    list.innerHTML = bd.map(b => {
+        const s = b.score ?? 0;
+        const level = s >= 80 ? 'excellent' : s >= 60 ? 'good' : s >= 40 ? 'fair' : 'poor';
+        const tip = tips[b.component] || b.detail || '';
         return `
-            <div class="compliance-item">
-                <span class="compliance-icon ${check.status}">${icon}</span>
-                <div class="compliance-text">
-                    <div class="compliance-name">${check.metric}</div>
-                    <div class="compliance-detail">${check.message || check.value}</div>
-                </div>
-            </div>
-        `;
+            <div class="breakdown-row" title="${tip}">
+                <span class="breakdown-label">${b.component} (${(b.weight * 100).toFixed(0)}%)</span>
+                <div class="breakdown-track"><div class="breakdown-fill ${level}" style="width:${s}%"></div></div>
+                <span class="breakdown-val">${s.toFixed(0)}</span>
+            </div>`;
     }).join('');
 }
 
-// Render Visualizations
-function renderVisualizations(viz) {
+
+// Compliance
+
+function renderCompliance(c) {
+    const card = document.getElementById('compliance-card');
+    const list = document.getElementById('compliance-list');
+    const checks = c?.checks || [];
+    if (!checks.length) { card.classList.add('hidden'); return; }
+    card.classList.remove('hidden');
+
+    list.innerHTML = checks.map(ch => `
+        <div class="compliance-row">
+            <span class="compliance-dot ${ch.status}"></span>
+            <div class="compliance-info">
+                <span class="compliance-name">${ch.check}</span>
+                <span class="compliance-detail">${ch.detail || ''}</span>
+            </div>
+        </div>`).join('');
+}
+
+
+// Visualizations
+
+function renderViz(v) {
     const card = document.getElementById('viz-card');
     const container = document.getElementById('viz-container');
-    
-    if (!viz) {
-        card.classList.add('hidden');
-        return;
-    }
-    
+    if (!v) { card.classList.add('hidden'); return; }
+
     const items = [
-        { key: 'waveform', label: 'Waveform' },
-        { key: 'spectrogram', label: 'Mel Spectrogram' },
-        { key: 'loudness', label: 'Loudness Over Time' },
-        { key: 'speakers', label: 'Speaker Timeline' },
-    ];
-    
-    const visibleItems = items.filter(item => viz[item.key]);
-    
-    if (visibleItems.length === 0) {
-        card.classList.add('hidden');
-        return;
-    }
-    
+        ['waveform', 'Waveform'],
+        ['spectrogram', 'Mel Spectrogram'],
+        ['loudness', 'Loudness Over Time'],
+        ['speakers', 'Speaker Timeline'],
+    ].filter(([k]) => v[k]);
+
+    if (!items.length) { card.classList.add('hidden'); return; }
     card.classList.remove('hidden');
-    container.innerHTML = visibleItems
-        .map(item => `
-            <div class="viz-item">
-                <img src="data:image/png;base64,${viz[item.key]}" alt="${item.label}" loading="lazy">
-                <div class="viz-label">${item.label}</div>
-            </div>
-        `).join('');
+
+    container.innerHTML = items.map(([k, label]) => `
+        <div class="viz-item">
+            <img src="data:image/png;base64,${v[k]}" alt="${label}" loading="lazy">
+            <div class="viz-caption">${label}</div>
+        </div>`).join('');
 }
 
-// Render Errors
-function renderErrors(errors) {
+
+// Errors / warnings
+
+function renderErrors(errs) {
     const card = document.getElementById('errors-card');
     const list = document.getElementById('errors-list');
-    
-    if (!errors || errors.length === 0) {
-        card.classList.add('hidden');
-        return;
-    }
-    
+    if (!errs || !errs.length) { card.classList.add('hidden'); return; }
     card.classList.remove('hidden');
-    list.innerHTML = errors.map(error => `
-        <div class="error-item">
-            <span>⚠️</span>
-            <span>${error}</span>
-        </div>
-    `).join('');
+    list.innerHTML = errs.map(e => `<div class="error-row">${e}</div>`).join('');
 }
 
-// Download JSON report
+
+// ── Buttons ─────────────────────────────────────────
+
+function setupButtons() {
+    document.getElementById('btn-new-analysis').addEventListener('click', reset);
+    document.getElementById('btn-download-json').addEventListener('click', downloadJson);
+}
+
+function reset() {
+    resultsSection.classList.add('hidden');
+    progressSection.classList.add('hidden');
+    uploadZone.classList.remove('hidden');
+    retainLabel.classList.remove('hidden');
+    fileInput.value = '';
+    currentResult = null;
+
+    // Reset ring
+    const ring = document.getElementById('score-ring-fill');
+    const circ = 2 * Math.PI * 52;
+    ring.style.strokeDashoffset = circ;
+    ring.style.stroke = 'var(--accent)';
+}
+
 function downloadJson() {
     if (!currentResult) return;
-    
-    // Create a clean copy without base64 visualization data
-    const cleanResult = JSON.parse(JSON.stringify(currentResult));
-    if (cleanResult.visualizations) {
-        const vizKeys = Object.keys(cleanResult.visualizations);
-        vizKeys.forEach(key => {
-            if (cleanResult.visualizations[key]) {
-                cleanResult.visualizations[key] = '[base64 image omitted]';
-            }
+
+    const clean = JSON.parse(JSON.stringify(currentResult));
+    if (clean.visualizations) {
+        Object.keys(clean.visualizations).forEach(k => {
+            if (clean.visualizations[k]) clean.visualizations[k] = '[base64 omitted]';
         });
     }
-    
-    const blob = new Blob([JSON.stringify(cleanResult, null, 2)], { type: 'application/json' });
+
+    const blob = new Blob([JSON.stringify(clean, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -565,118 +425,42 @@ function downloadJson() {
     URL.revokeObjectURL(url);
 }
 
-// Reset UI for new analysis
-function resetUI() {
-    currentResult = null;
-    fileInput.value = '';
-    
-    resultsSection.classList.add('hidden');
+
+// ── Helpers ─────────────────────────────────────────
+
+function showError(msg) {
+    stopStages();
     progressSection.classList.add('hidden');
     uploadZone.classList.remove('hidden');
     retainLabel.classList.remove('hidden');
-    
-    // Scroll to top
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    alert(msg);
 }
 
-// Show error message
-function showError(message) {
-    stopAnalysisStages();
-    progressSection.classList.add('hidden');
-    uploadZone.classList.remove('hidden');
-    retainLabel.classList.remove('hidden');
-    
-    // Create temporary error toast
-    const toast = document.createElement('div');
-    toast.style.cssText = `
-        position: fixed;
-        bottom: 2rem;
-        left: 50%;
-        transform: translateX(-50%);
-        background: #EF4444;
-        color: white;
-        padding: 1rem 2rem;
-        border-radius: 8px;
-        font-weight: 500;
-        z-index: 1000;
-        animation: fadeInUp 0.3s ease;
-    `;
-    toast.textContent = message;
-    document.body.appendChild(toast);
-    
-    setTimeout(() => {
-        toast.style.animation = 'fadeOut 0.3s ease forwards';
-        setTimeout(() => toast.remove(), 300);
-    }, 5000);
+function toDataItem([label, value, cls]) {
+    const c = cls ? ` ${cls}` : '';
+    return `<div class="data-item"><span class="data-label">${label}</span><span class="data-value${c}">${value}</span></div>`;
 }
 
-// Utility: Format duration
-function formatDuration(seconds) {
-    if (seconds == null) return '-';
-    
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = Math.floor(seconds % 60);
-    const ms = Math.round((seconds % 1) * 1000);
-    
-    if (h > 0) {
-        return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-    } else if (m > 0) {
-        return `${m}:${s.toString().padStart(2, '0')}`;
-    } else {
-        return `${s}.${ms.toString().padStart(3, '0')}s`;
-    }
+function fmtDur(secs) {
+    if (secs == null) return '-';
+    const m = Math.floor(secs / 60);
+    const s = Math.floor(secs % 60);
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
-// Utility: Format file size
-function formatFileSize(bytes) {
+function fmtSize(bytes) {
     if (bytes == null) return '-';
-    
-    const units = ['B', 'KB', 'MB', 'GB'];
-    let i = 0;
-    let size = bytes;
-    
-    while (size >= 1024 && i < units.length - 1) {
-        size /= 1024;
-        i++;
-    }
-    
-    return `${size.toFixed(i > 0 ? 1 : 0)} ${units[i]}`;
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+    if (bytes < 1073741824) return (bytes / 1048576).toFixed(1) + ' MB';
+    return (bytes / 1073741824).toFixed(2) + ' GB';
 }
 
-// Utility: Animate number
-function animateNumber(element, from, to, duration) {
-    const start = performance.now();
-    const range = to - from;
-    
-    function update(timestamp) {
-        const elapsed = timestamp - start;
-        const progress = Math.min(elapsed / duration, 1);
-        
-        // Ease out
-        const eased = 1 - Math.pow(1 - progress, 3);
-        const current = Math.round(from + range * eased);
-        
-        element.textContent = current;
-        
-        if (progress < 1) {
-            requestAnimationFrame(update);
-        }
-    }
-    
-    requestAnimationFrame(update);
-}
 
-// Add CSS animation for toast
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes fadeInUp {
-        from { opacity: 0; transform: translate(-50%, 20px); }
-        to { opacity: 1; transform: translate(-50%, 0); }
-    }
-    @keyframes fadeOut {
-        from { opacity: 1; }
-        to { opacity: 0; }
-    }
-`;
-document.head.appendChild(style);
+// ── Init ────────────────────────────────────────────
+
+document.addEventListener('DOMContentLoaded', () => {
+    setupMobileNav();
+    setupUpload();
+    setupButtons();
+});

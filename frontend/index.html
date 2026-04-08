@@ -3,285 +3,244 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Audio Quality Checker | Free AI-Powered Audio Analysis Tool | UsergyAI</title>
-    <meta name="description" content="Free AI-powered audio quality analysis tool. Check sample rate, SNR, clipping, silence, language detection, speaker count, and get instant quality scores. Supports WAV, MP3, FLAC, OGG, and more.">
-    <meta name="keywords" content="audio quality checker, audio analyzer, WAV analyzer, MP3 quality, SNR checker, clipping detection, speech analysis, language detection, audio QA tool, UsergyAI">
+    <title>Audio Quality Checker — Free Analysis Tool | UsergyAI</title>
+    <meta name="description" content="Analyze any audio file in seconds. Get quality scores, signal metrics, language detection, and compliance reports. Free tool by UsergyAI.">
+    <meta name="keywords" content="audio quality checker, audio analyzer, SNR checker, clipping detection, language detection, UsergyAI">
     <meta name="author" content="UsergyAI">
     <meta name="robots" content="index, follow">
-    
-    <!-- Open Graph / Social -->
+
     <meta property="og:type" content="website">
-    <meta property="og:title" content="Audio Quality Checker | Free AI-Powered Analysis">
-    <meta property="og:description" content="Upload any audio file and get instant quality analysis with AI-powered insights. Free tool by UsergyAI.">
+    <meta property="og:title" content="Audio Quality Checker — Free Analysis Tool">
+    <meta property="og:description" content="Upload any audio file and get a detailed quality report in seconds.">
     <meta property="og:url" content="https://usergy.ai/tools/audio-quality-checker">
     <meta property="og:site_name" content="UsergyAI">
-    
-    <!-- Twitter -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Audio Quality Checker | Free AI-Powered Analysis">
-    <meta name="twitter:description" content="Upload any audio file and get instant quality analysis with AI-powered insights.">
+
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Audio Quality Checker — Free Analysis Tool">
+    <meta name="twitter:description" content="Upload any audio file and get a detailed quality report in seconds.">
     <meta name="twitter:site" content="@UsergyAI">
-    
-    <!-- Fonts -->
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;450;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    
-    <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎵</text></svg>">
-    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎵</text></svg>">
-    
-    <!-- Canonical -->
     <link rel="canonical" href="https://usergy.ai/tools/audio-quality-checker">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23111'/%3E%3Cpath d='M10 20V12M14 22V10M18 18V14M22 20V12' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
 </head>
 <body>
-    <!-- Navigation -->
-    <nav class="navbar">
-        <div class="nav-content">
-            <a href="/" class="nav-logo">
-                <span class="logo-icon">🎵</span>
-                <span class="logo-text">Audio Quality Checker</span>
-                <span class="logo-badge">by UsergyAI</span>
+
+    <!-- Nav -->
+    <nav class="nav">
+        <div class="nav-inner">
+            <a href="/" class="nav-brand">
+                <svg class="nav-icon" width="24" height="24" viewBox="0 0 32 32" fill="none">
+                    <rect width="32" height="32" rx="8" fill="#111"/>
+                    <path d="M10 20V12M14 22V10M18 18V14M22 20V12" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                <span>Audio Quality Checker</span>
             </a>
             <div class="nav-links" id="nav-links">
                 <a href="#features">Features</a>
-                <a href="#how-it-works">How It Works</a>
-                <a href="https://usergy.ai" target="_blank" class="nav-cta">UsergyAI &rarr;</a>
+                <a href="#how">How it works</a>
+                <a href="https://usergy.ai" target="_blank" class="nav-cta">UsergyAI</a>
             </div>
-            <button class="nav-hamburger" id="nav-hamburger" aria-label="Toggle menu">
-                <span></span>
-                <span></span>
-                <span></span>
+            <button class="nav-toggle" id="nav-toggle" aria-label="Menu">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <line x1="3" y1="5" x2="17" y2="5"/>
+                    <line x1="3" y1="10" x2="17" y2="10"/>
+                    <line x1="3" y1="15" x2="17" y2="15"/>
+                </svg>
             </button>
         </div>
     </nav>
 
-    <!-- Hero Section -->
+    <!-- Hero -->
     <section class="hero">
-        <div class="hero-bg">
-            <div class="hero-gradient"></div>
-            <div class="hero-grid"></div>
-        </div>
-        <div class="hero-content">
-            <div class="hero-badge">
-                <span class="badge-dot"></span>
-                AI-Powered Audio Analysis
-            </div>
-            <h1 class="hero-title">
-                Know Your Audio Quality<br>
-                <span class="gradient-text">In Seconds</span>
-            </h1>
-            <p class="hero-subtitle">
-                Upload any audio file. Get instant quality scores, technical metrics, 
-                AI-powered language detection, speech analysis, and beautiful visualizations.
-            </p>
-            
-            <!-- Upload Zone -->
+        <div class="container">
+            <p class="hero-tag">Free tool by UsergyAI</p>
+            <h1 class="hero-title">Understand your audio quality<br>in seconds</h1>
+            <p class="hero-sub">Upload any audio file. Get a detailed report with quality scores,<br class="hide-mobile"> signal analysis, language detection, and compliance checks.</p>
+
+            <!-- Upload -->
             <div id="upload-zone" class="upload-zone">
-                <div class="upload-icon">
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <div class="upload-inner">
+                    <svg class="upload-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                         <polyline points="17 8 12 3 7 8"/>
                         <line x1="12" y1="3" x2="12" y2="15"/>
                     </svg>
+                    <p class="upload-main">Drop your file here, or <span class="upload-browse">browse</span></p>
+                    <p class="upload-hint">WAV, MP3, FLAC, OGG, AAC, M4A, AIFF, OPUS, WebM, WMA, AMR &middot; Up to 1 GB</p>
                 </div>
-                <p class="upload-text">Drag & drop your audio file here</p>
-                <p class="upload-subtext">or click to browse</p>
-                <p class="upload-formats">WAV, MP3, FLAC, OGG, AAC, M4A, AIFF, OPUS, WebM, WMA, AMR &bull; Up to 1 GB</p>
                 <input type="file" id="file-input" accept=".wav,.mp3,.flac,.ogg,.aac,.m4a,.aiff,.aif,.opus,.webm,.wma,.amr" hidden>
             </div>
 
-            <!-- Retain Checkbox (below upload zone) -->
-            <label class="retain-label" id="retain-label">
+            <!-- Retain opt-in -->
+            <label class="retain" id="retain-label">
                 <input type="checkbox" id="retain-checkbox" checked>
-                <span class="retain-checkmark"></span>
-                <span class="retain-text">Help us improve — your file may be used to enhance our analysis models</span>
+                <span class="retain-box"></span>
+                <span class="retain-text">Help us improve &mdash; your file may be used to enhance our analysis</span>
             </label>
 
-            <!-- Progress Bar (hidden by default) -->
-            <div id="progress-section" class="progress-section hidden">
-                <div class="progress-header">
-                    <span id="progress-filename" class="progress-filename"></span>
-                    <span id="progress-percent" class="progress-percent">0%</span>
+            <!-- Progress -->
+            <div id="progress-section" class="progress hidden">
+                <div class="progress-top">
+                    <span id="progress-filename" class="progress-name"></span>
+                    <span id="progress-percent" class="progress-pct">0%</span>
                 </div>
-                <div class="progress-bar">
-                    <div id="progress-fill" class="progress-fill"></div>
+                <div class="progress-track">
+                    <div id="progress-fill" class="progress-bar"></div>
                 </div>
                 <p id="progress-status" class="progress-status">Uploading...</p>
             </div>
         </div>
     </section>
 
-    <!-- Results Section (hidden by default) -->
-    <section id="results-section" class="results-section hidden">
-        <div class="results-container">
-            
-            <!-- Quality Score Card -->
+    <!-- Results -->
+    <section id="results-section" class="results hidden">
+        <div class="container">
+
+            <!-- Score -->
             <div class="score-card" id="score-card">
-                <div class="score-circle-container">
+                <div class="score-ring-wrap">
                     <svg class="score-ring" viewBox="0 0 120 120">
-                        <circle class="score-ring-bg" cx="60" cy="60" r="54"/>
-                        <circle class="score-ring-fill" id="score-ring-fill" cx="60" cy="60" r="54"/>
+                        <defs>
+                            <linearGradient id="score-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" style="stop-color:#00BFA6"/>
+                                <stop offset="100%" style="stop-color:#F5A623"/>
+                            </linearGradient>
+                        </defs>
+                        <circle class="score-ring-bg" cx="60" cy="60" r="52"/>
+                        <circle class="score-ring-fill" id="score-ring-fill" cx="60" cy="60" r="52"/>
                     </svg>
-                    <div class="score-value">
-                        <span id="score-number" class="score-number">0</span>
-                        <span class="score-max">/100</span>
+                    <div class="score-num-wrap">
+                        <span id="score-number" class="score-num">0</span>
+                        <span class="score-of">/100</span>
                     </div>
                 </div>
-                <div class="score-info">
-                    <div id="score-grade" class="score-grade">-</div>
+                <div class="score-meta">
+                    <span id="score-grade" class="score-grade">-</span>
                     <p id="score-summary" class="score-summary">Analyzing...</p>
                 </div>
             </div>
 
-            <!-- File Info -->
-            <div class="result-card" id="file-info-card">
-                <h3 class="card-title">
-                    <span class="card-icon">📄</span> File Information
-                </h3>
-                <div id="file-info-grid" class="info-grid"></div>
-            </div>
+            <!-- Cards grid -->
+            <div class="cards">
 
-            <!-- Signal Analysis -->
-            <div class="result-card" id="signal-card">
-                <h3 class="card-title">
-                    <span class="card-icon">📊</span> Signal Analysis
-                </h3>
-                <div id="signal-grid" class="info-grid"></div>
-            </div>
+                <div class="card" id="file-info-card">
+                    <h3 class="card-heading">File Information</h3>
+                    <div id="file-info-grid" class="data-grid"></div>
+                </div>
 
-            <!-- AI Analysis -->
-            <div class="result-card" id="ai-card">
-                <h3 class="card-title">
-                    <span class="card-icon">🤖</span> AI Analysis
-                </h3>
-                <div id="ai-grid" class="info-grid"></div>
-            </div>
+                <div class="card" id="signal-card">
+                    <h3 class="card-heading">Signal Analysis</h3>
+                    <div id="signal-grid" class="data-grid"></div>
+                </div>
 
-            <!-- Quality Breakdown -->
-            <div class="result-card full-width" id="breakdown-card">
-                <h3 class="card-title">
-                    <span class="card-icon">🎯</span> Quality Breakdown
-                </h3>
-                <div id="breakdown-list" class="breakdown-list"></div>
-            </div>
+                <div class="card" id="ai-card">
+                    <h3 class="card-heading">AI Analysis</h3>
+                    <div id="ai-grid" class="data-grid"></div>
+                </div>
 
-            <!-- Compliance -->
-            <div class="result-card full-width" id="compliance-card">
-                <h3 class="card-title">
-                    <span class="card-icon">✅</span> Compliance Check
-                </h3>
-                <div id="compliance-list" class="compliance-list"></div>
-            </div>
+                <div class="card card-wide" id="breakdown-card">
+                    <h3 class="card-heading">Quality Breakdown</h3>
+                    <div id="breakdown-list" class="breakdown"></div>
+                </div>
 
-            <!-- Visualizations -->
-            <div class="result-card full-width" id="viz-card">
-                <h3 class="card-title">
-                    <span class="card-icon">📈</span> Visualizations
-                </h3>
-                <div id="viz-container" class="viz-container"></div>
-            </div>
+                <div class="card card-wide" id="compliance-card">
+                    <h3 class="card-heading">Compliance</h3>
+                    <div id="compliance-list" class="compliance"></div>
+                </div>
 
-            <!-- Errors (if any) -->
-            <div class="result-card full-width error-card hidden" id="errors-card">
-                <h3 class="card-title">
-                    <span class="card-icon">⚠️</span> Warnings
-                </h3>
-                <div id="errors-list" class="errors-list"></div>
+                <div class="card card-wide" id="viz-card">
+                    <h3 class="card-heading">Visualizations</h3>
+                    <div id="viz-container" class="viz-grid"></div>
+                </div>
+
+                <div class="card card-wide hidden" id="errors-card">
+                    <h3 class="card-heading card-heading--warn">Warnings</h3>
+                    <div id="errors-list" class="errors"></div>
+                </div>
             </div>
 
             <!-- Actions -->
-            <div class="results-actions">
-                <button id="btn-download-json" class="btn btn-secondary">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                    Download JSON Report
+            <div class="actions">
+                <button id="btn-download-json" class="btn btn--outline">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Download report
                 </button>
-                <button id="btn-new-analysis" class="btn btn-primary">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                    Analyze Another File
-                </button>
+                <button id="btn-new-analysis" class="btn btn--solid">Analyze another file</button>
             </div>
         </div>
     </section>
 
-    <!-- Features Section -->
-    <section id="features" class="features-section">
-        <div class="features-container">
-            <h2 class="section-title">Everything You Need to Know About Your Audio</h2>
-            <p class="section-subtitle">Professional-grade analysis powered by AI models and signal processing</p>
-            
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">🎚️</div>
+    <!-- Features -->
+    <section id="features" class="features">
+        <div class="container">
+            <h2 class="section-title">What you get</h2>
+            <p class="section-sub">A full diagnostic report, powered by signal processing and neural networks.</p>
+            <div class="feature-grid">
+                <div class="feature">
                     <h3>Technical Metrics</h3>
-                    <p>Sample rate, bit depth, codec, duration, channels, bit rate, and file format analysis</p>
+                    <p>Sample rate, bit depth, codec, duration, channels, and file format.</p>
                 </div>
-                <div class="feature-card">
-                    <div class="feature-icon">📊</div>
+                <div class="feature">
                     <h3>Signal Quality</h3>
-                    <p>Peak amplitude, RMS level, dynamic range, SNR, DC offset, clipping detection</p>
+                    <p>Peak amplitude, RMS level, dynamic range, SNR, DC offset, and clipping.</p>
                 </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🔇</div>
+                <div class="feature">
                     <h3>Silence Detection</h3>
-                    <p>Find silent regions, calculate silence percentage, longest silent stretch</p>
+                    <p>Silent regions, silence percentage, and longest silent stretch.</p>
                 </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🌍</div>
+                <div class="feature">
                     <h3>Language Detection</h3>
-                    <p>AI-powered detection of 99 languages with confidence scores using OpenAI Whisper</p>
+                    <p>99 languages with confidence scores. Powered by neural speech models.</p>
                 </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🗣️</div>
+                <div class="feature">
                     <h3>Speech Activity</h3>
-                    <p>Silero VAD detects speech vs noise regions with precise timestamps</p>
+                    <p>Detects speech vs. noise regions with precise timestamps.</p>
                 </div>
-                <div class="feature-card">
-                    <div class="feature-icon">👥</div>
+                <div class="feature">
                     <h3>Speaker Count</h3>
-                    <p>Pyannote diarization identifies how many speakers and when each talks</p>
+                    <p>Identifies how many speakers are present and when each one talks.</p>
                 </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🎯</div>
+                <div class="feature">
                     <h3>Quality Score</h3>
-                    <p>Weighted 0-100 score with A+ to F grading across 9 quality components</p>
+                    <p>Weighted 0&ndash;100 score across 9 components, graded A+ through F.</p>
                 </div>
-                <div class="feature-card">
-                    <div class="feature-icon">✅</div>
+                <div class="feature">
                     <h3>Compliance Check</h3>
-                    <p>Pass/warn/fail against common AI data project specifications</p>
+                    <p>Pass / warn / fail against common AI data project specifications.</p>
                 </div>
-                <div class="feature-card">
-                    <div class="feature-icon">📈</div>
+                <div class="feature">
                     <h3>Visualizations</h3>
-                    <p>Waveform, mel spectrogram, loudness chart, and speaker timeline images</p>
+                    <p>Waveform, spectrogram, loudness chart, and speaker timeline.</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- How It Works -->
-    <section id="how-it-works" class="how-section">
-        <div class="how-container">
-            <h2 class="section-title">How It Works</h2>
-            <div class="steps-grid">
-                <div class="step-card">
-                    <div class="step-number">1</div>
+    <!-- How it works -->
+    <section id="how" class="how">
+        <div class="container">
+            <h2 class="section-title">How it works</h2>
+            <div class="steps">
+                <div class="step">
+                    <span class="step-num">1</span>
                     <h3>Upload</h3>
-                    <p>Drag and drop or browse for any audio file. Supports 12 formats up to 1 GB.</p>
+                    <p>Drop any audio file. 12 formats supported, up to 1 GB.</p>
                 </div>
-                <div class="step-arrow">&rarr;</div>
-                <div class="step-card">
-                    <div class="step-number">2</div>
+                <div class="step-line"></div>
+                <div class="step">
+                    <span class="step-num">2</span>
                     <h3>Analyze</h3>
-                    <p>Our AI pipeline runs 6 analyzers: metadata, signal, clipping, silence, language, and speech.</p>
+                    <p>Six analyzers run in parallel: metadata, signal, clipping, silence, language, speech.</p>
                 </div>
-                <div class="step-arrow">&rarr;</div>
-                <div class="step-card">
-                    <div class="step-number">3</div>
-                    <h3>Results</h3>
-                    <p>Get a detailed report with quality score, compliance check, and beautiful visualizations.</p>
+                <div class="step-line"></div>
+                <div class="step">
+                    <span class="step-num">3</span>
+                    <h3>Report</h3>
+                    <p>Get a detailed breakdown with scores, compliance checks, and charts.</p>
                 </div>
             </div>
         </div>
@@ -289,9 +248,9 @@
 
     <!-- Footer -->
     <footer class="footer">
-        <div class="footer-content">
-            <p>Built by <a href="https://usergy.ai" target="_blank">UsergyAI</a> &mdash; AI Data Services for the Real World</p>
-            <p class="footer-sub">Your audio files are processed on our server and deleted after analysis unless you opt in to help improve our models.</p>
+        <div class="container footer-inner">
+            <p>Built by <a href="https://usergy.ai" target="_blank">UsergyAI</a></p>
+            <p class="footer-small">Files are deleted after analysis unless you opt in to help improve our models.</p>
         </div>
     </footer>
 
