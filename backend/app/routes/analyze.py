@@ -110,11 +110,14 @@ async def analyze_audio(
 async def analyze_batch(
     files: list[UploadFile] = File(...),
     profile: str = Form("default"),
+    mode: str = Form("quick"),
     key_info: dict = Depends(optional_api_key),
 ):
     """
     Analyze multiple audio files in parallel. Returns a summary + individual results.
     Max 20 files per batch.
+    
+    mode: "quick" (fast, essential metrics) or "deep" (full AI analysis). Default: quick.
     """
     if len(files) > 20:
         raise HTTPException(status_code=400, detail="Maximum 20 files per batch.")
@@ -150,9 +153,9 @@ async def analyze_batch(
                 result = await asyncio.wait_for(
                     loop.run_in_executor(
                         _analysis_pool,
-                        lambda p=temp_path, fn=filename, fs=file_size: run_analysis_pipeline(
+                        lambda p=temp_path, fn=filename, fs=file_size, m=mode: run_analysis_pipeline(
                             filepath=p, original_filename=fn or "unknown",
-                            file_size=fs, profile_name=profile,
+                            file_size=fs, profile_name=profile, mode=m,
                         )
                     ),
                     timeout=ANALYSIS_TIMEOUT,

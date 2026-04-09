@@ -41,7 +41,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Audio Quality Checker",
     description="Deep audio analysis tool for the AI data industry",
-    version="2.4.0",
+    version="4.5.0",
     lifespan=lifespan,
 )
 

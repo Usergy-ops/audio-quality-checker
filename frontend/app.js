@@ -205,16 +205,16 @@ function handleFile(file) {
 // ── Results ─────────────────────────────────────────
 
 function showResults(r) {
-    console.log('[AQC] showResults called, response:', r);
+    //console.log('[AQC] showResults called, response:', r);
     progressSection.classList.add('hidden');
     resultsSection.classList.remove('hidden');
 
     const safe = (fn, name) => {
         try {
             fn();
-            console.log(`[AQC] render ${name} OK`);
+            //console.log(`[AQC] render ${name} OK`);
         } catch(e) {
-            console.error(`[AQC] Render ${name} failed:`, e);
+            //console.error(`[AQC] Render ${name} failed:`, e);
         }
     };
 

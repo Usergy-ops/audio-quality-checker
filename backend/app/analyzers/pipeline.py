@@ -128,7 +128,7 @@ def run_analysis_pipeline(
     
     # ── Step 4: AI Analysis (parallel) ──
     # Run language, VAD, and speakers concurrently for speed
-    from concurrent.futures import ThreadPoolExecutor, as_completed
+    from concurrent.futures import ThreadPoolExecutor
     language_info = None
     speech_activity_info = None
     speaker_info = None
