@@ -149,10 +149,18 @@ function handleFile(file) {
 // ── Results ─────────────────────────────────────────
 
 function showResults(r) {
+    console.log('[AQC] showResults called, response:', r);
     progressSection.classList.add('hidden');
     resultsSection.classList.remove('hidden');
 
-    const safe = (fn, name) => { try { fn(); } catch(e) { console.error(`Render ${name} failed:`, e); } };
+    const safe = (fn, name) => {
+        try {
+            fn();
+            console.log(`[AQC] render ${name} OK`);
+        } catch(e) {
+            console.error(`[AQC] Render ${name} failed:`, e);
+        }
+    };
 
     safe(() => renderScore(r.quality), 'score');
     safe(() => renderFileInfo(r.file_info), 'fileInfo');
@@ -168,6 +176,9 @@ function showResults(r) {
     if (timeEl && r.processing_time_seconds) {
         timeEl.textContent = `Analyzed in ${r.processing_time_seconds}s`;
     }
+
+    // Trigger reveal animations for newly visible cards
+    setTimeout(() => setupReveal(), 50);
 }
 
 
@@ -286,7 +297,7 @@ function renderAI(a) {
         const langDisplay = l.name || l.detected || '-';
         items.push(
             ['Language', langDisplay],
-            ['Confidence', l.confidence != null ? `${(l.confidence * 100).toFixed(0)}%` : '-'],
+            ['Confidence', l.confidence != null ? `${l.confidence.toFixed(0)}%` : '-'],
         );
         if (l.alternatives && l.alternatives.length > 0) {
             const alt = l.alternatives.slice(0, 2).map(a => a.name || a.language).join(', ');
@@ -479,10 +490,37 @@ function fmtSize(bytes) {
 }
 
 
+// ── Scroll Reveal ───────────────────────────────────
+
+function setupReveal() {
+    const reveals = document.querySelectorAll('.reveal');
+    if (!reveals.length) return;
+
+    // If IntersectionObserver not available, just show everything
+    if (!('IntersectionObserver' in window)) {
+        reveals.forEach(el => el.classList.add('in'));
+        return;
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry, i) => {
+            if (entry.isIntersecting) {
+                // Stagger the reveal slightly
+                setTimeout(() => entry.target.classList.add('in'), i * 80);
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.1 });
+
+    reveals.forEach(el => observer.observe(el));
+}
+
+
 // ── Init ────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
     setupMobileNav();
     setupUpload();
     setupButtons();
+    setupReveal();
 });

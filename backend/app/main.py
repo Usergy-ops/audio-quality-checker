@@ -37,12 +37,14 @@ async def root():
 
 @app.get("/style.css")
 async def get_css():
-    return FileResponse(FRONTEND_DIR / "style.css", media_type="text/css")
+    return FileResponse(FRONTEND_DIR / "style.css", media_type="text/css",
+                       headers={"Cache-Control": "no-cache, no-store, must-revalidate"})
 
 
 @app.get("/app.js")
 async def get_js():
-    return FileResponse(FRONTEND_DIR / "app.js", media_type="application/javascript")
+    return FileResponse(FRONTEND_DIR / "app.js", media_type="application/javascript",
+                       headers={"Cache-Control": "no-cache, no-store, must-revalidate"})
 
 
 @app.get("/health")
