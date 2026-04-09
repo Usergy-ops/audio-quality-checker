@@ -69,10 +69,20 @@ class SpeakerInfo(BaseModel):
     overlap_percentage: float = 0.0
 
 
+class SpeechQualityInfo(BaseModel):
+    mos: float  # Mean Opinion Score (1-5)
+    mos_rating: str  # Excellent/Good/Fair/Poor/Bad
+    noisiness: float  # 1-5 (5=clean)
+    coloration: float  # 1-5 (5=natural)
+    discontinuity: float  # 1-5 (5=smooth)
+    loudness: float  # 1-5 (5=appropriate)
+
+
 class AIAnalysis(BaseModel):
     language: Optional[LanguageInfo] = None
     speech_activity: Optional[SpeechActivityInfo] = None
     speakers: Optional[SpeakerInfo] = None
+    speech_quality: Optional[SpeechQualityInfo] = None
 
 
 class ScoreBreakdown(BaseModel):

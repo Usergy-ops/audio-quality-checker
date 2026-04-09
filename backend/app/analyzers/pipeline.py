@@ -17,6 +17,7 @@ from app.analyzers.snr import calculate_snr
 from app.analyzers.language import detect_language
 from app.analyzers.vad import detect_speech_activity
 from app.analyzers.speakers import count_speakers
+from app.analyzers.nisqa import assess_speech_quality
 from app.utils.audio import convert_to_wav
 from app.utils.scoring import calculate_quality_score, calculate_compliance
 from app.utils.visualizations import generate_all_visualizations
@@ -118,17 +119,20 @@ def run_analysis_pipeline(
     language_info = None
     speech_activity_info = None
     speaker_info = None
+    speech_quality_info = None
     
     ai_tasks = {}
-    with ThreadPoolExecutor(max_workers=3, thread_name_prefix="ai") as ai_pool:
+    with ThreadPoolExecutor(max_workers=4, thread_name_prefix="ai") as ai_pool:
         if audio_data is not None:
             ai_tasks['language'] = ai_pool.submit(detect_language, audio_data=audio_data, sample_rate=sr)
             ai_tasks['vad'] = ai_pool.submit(detect_speech_activity, audio_data=audio_data, sample_rate=sr)
             ai_tasks['speakers'] = ai_pool.submit(count_speakers, audio_data=audio_data, sample_rate=sr)
+            ai_tasks['nisqa'] = ai_pool.submit(assess_speech_quality, audio_data=audio_data, sample_rate=sr)
         else:
             ai_tasks['language'] = ai_pool.submit(detect_language, filepath=wav_path)
             ai_tasks['vad'] = ai_pool.submit(detect_speech_activity, filepath=wav_path)
             ai_tasks['speakers'] = ai_pool.submit(count_speakers, filepath=wav_path)
+            ai_tasks['nisqa'] = ai_pool.submit(assess_speech_quality, filepath=wav_path)
     
     # Collect results
     for name, future in ai_tasks.items():
@@ -140,16 +144,19 @@ def run_analysis_pipeline(
                 speech_activity_info = result
             elif name == 'speakers':
                 speaker_info = result
+            elif name == 'nisqa':
+                speech_quality_info = result
         except Exception as e:
             errors.append(f"{name} failed: {str(e)[:200]}")
             traceback.print_exc()
     
     # Build AI analysis object
-    if language_info or speech_activity_info or speaker_info:
+    if language_info or speech_activity_info or speaker_info or speech_quality_info:
         ai_analysis = AIAnalysis(
             language=language_info,
             speech_activity=speech_activity_info,
             speakers=speaker_info,
+            speech_quality=speech_quality_info,
         )
     
     # ── Step 5: Quality Scoring ──

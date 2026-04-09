@@ -185,6 +185,7 @@ function showResults(r) {
     safe(() => renderFileInfo(r.file_info), 'fileInfo');
     safe(() => renderSignal(r.signal_analysis), 'signal');
     safe(() => renderAI(r.ai_analysis), 'ai');
+    safe(() => renderMOS(r.ai_analysis), 'mos');
     safe(() => renderBreakdown(r.quality), 'breakdown');
     safe(() => renderCompliance(r.compliance), 'compliance');
     safe(() => renderViz(r.visualizations), 'viz');
@@ -341,6 +342,63 @@ function renderAI(a) {
     }
 
     document.getElementById('ai-grid').innerHTML = items.map(toDataItem).join('');
+}
+
+
+// MOS Speech Quality
+
+function renderMOS(a) {
+    const card = document.getElementById('speech-quality-card');
+    if (!a || !a.speech_quality) {
+        if (card) card.style.display = 'none';
+        return;
+    }
+    if (card) card.style.display = '';
+
+    const sq = a.speech_quality;
+    const mos = sq.mos;
+
+    // Color based on MOS
+    let color = '#E74C3C'; // red
+    if (mos >= 4.0) color = '#27ae60';
+    else if (mos >= 3.5) color = '#00897B';
+    else if (mos >= 3.0) color = '#F5A623';
+    else if (mos >= 2.5) color = '#e67e22';
+
+    const subs = [
+        ['Noisiness', sq.noisiness, 'How clean the signal is (5 = no noise)'],
+        ['Coloration', sq.coloration, 'Spectral naturalness (5 = natural)'],
+        ['Discontinuity', sq.discontinuity, 'Temporal smoothness (5 = smooth)'],
+        ['Loudness', sq.loudness, 'Appropriate level (5 = good)'],
+    ];
+
+    function subColor(v) {
+        if (v >= 4.0) return '#27ae60';
+        if (v >= 3.0) return '#00897B';
+        if (v >= 2.5) return '#F5A623';
+        return '#E74C3C';
+    }
+
+    const barsHtml = subs.map(([label, val, tip]) => {
+        const pct = Math.max(0, Math.min(100, ((val - 1) / 4) * 100));
+        return `<div class="mos-sub-row" title="${tip}">
+            <span class="mos-sub-label">${label}</span>
+            <div class="mos-sub-bar"><div class="mos-sub-fill" style="width:${pct}%;background:${subColor(val)}"></div></div>
+            <span class="mos-sub-val" style="color:${subColor(val)}">${val.toFixed(1)}</span>
+        </div>`;
+    }).join('');
+
+    document.getElementById('mos-display').innerHTML = `
+        <div>
+            <div class="mos-score-big" style="color:${color}">${mos.toFixed(1)}</div>
+            <div class="mos-scale" style="text-align:center">out of 5.0</div>
+        </div>
+        <div style="flex:1">
+            <div class="mos-rating" style="color:${color}">${sq.mos_rating} Speech Quality</div>
+            <div class="mos-scale" style="margin-bottom:10px">NISQA MOS (Industry Standard)</div>
+            ${barsHtml}
+        </div>
+    `;
 }
 
 
