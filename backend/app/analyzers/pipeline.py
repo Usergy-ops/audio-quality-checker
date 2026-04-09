@@ -112,41 +112,37 @@ def run_analysis_pipeline(
         errors.append(f"Signal analysis failed: {str(e)[:200]}")
         traceback.print_exc()
     
-    # ── Step 4: AI Analysis ──
-    # Reuse audio_data from signal analysis — no redundant file reads
+    # ── Step 4: AI Analysis (parallel) ──
+    # Run language, VAD, and speakers concurrently for speed
+    from concurrent.futures import ThreadPoolExecutor, as_completed
     language_info = None
     speech_activity_info = None
     speaker_info = None
     
-    # 4a: Language detection (Whisper)
-    try:
+    ai_tasks = {}
+    with ThreadPoolExecutor(max_workers=3, thread_name_prefix="ai") as ai_pool:
         if audio_data is not None:
-            language_info = detect_language(audio_data=audio_data, sample_rate=sr)
+            ai_tasks['language'] = ai_pool.submit(detect_language, audio_data=audio_data, sample_rate=sr)
+            ai_tasks['vad'] = ai_pool.submit(detect_speech_activity, audio_data=audio_data, sample_rate=sr)
+            ai_tasks['speakers'] = ai_pool.submit(count_speakers, audio_data=audio_data, sample_rate=sr)
         else:
-            language_info = detect_language(filepath=wav_path)
-    except Exception as e:
-        errors.append(f"Language detection failed: {str(e)[:200]}")
-        traceback.print_exc()
+            ai_tasks['language'] = ai_pool.submit(detect_language, filepath=wav_path)
+            ai_tasks['vad'] = ai_pool.submit(detect_speech_activity, filepath=wav_path)
+            ai_tasks['speakers'] = ai_pool.submit(count_speakers, filepath=wav_path)
     
-    # 4b: Speech activity detection (Silero VAD)
-    try:
-        if audio_data is not None:
-            speech_activity_info = detect_speech_activity(audio_data=audio_data, sample_rate=sr)
-        else:
-            speech_activity_info = detect_speech_activity(filepath=wav_path)
-    except Exception as e:
-        errors.append(f"Speech activity detection failed: {str(e)[:200]}")
-        traceback.print_exc()
-    
-    # 4c: Speaker diarization (pyannote)
-    try:
-        if audio_data is not None:
-            speaker_info = count_speakers(audio_data=audio_data, sample_rate=sr)
-        else:
-            speaker_info = count_speakers(filepath=wav_path)
-    except Exception as e:
-        errors.append(f"Speaker diarization failed: {str(e)[:200]}")
-        traceback.print_exc()
+    # Collect results
+    for name, future in ai_tasks.items():
+        try:
+            result = future.result()
+            if name == 'language':
+                language_info = result
+            elif name == 'vad':
+                speech_activity_info = result
+            elif name == 'speakers':
+                speaker_info = result
+        except Exception as e:
+            errors.append(f"{name} failed: {str(e)[:200]}")
+            traceback.print_exc()
     
     # Build AI analysis object
     if language_info or speech_activity_info or speaker_info:

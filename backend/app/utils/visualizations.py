@@ -222,19 +222,23 @@ def generate_all_visualizations(
     speaker_info: SpeakerInfo | None = None,
     duration: float = 0,
 ) -> Visualizations:
-    """Generate all visualization images."""
+    """Generate all visualization images in parallel."""
+    from concurrent.futures import ThreadPoolExecutor
+
     speech_regions = []
     if speech_activity and speech_activity.speech_regions:
         speech_regions = speech_activity.speech_regions
-    
-    waveform = generate_waveform(y, sr, speech_regions)
-    spectrogram = generate_spectrogram(y, sr)
-    loudness = generate_loudness(y, sr)
-    speakers = generate_speaker_timeline(speaker_info, duration)
-    
+
+    # matplotlib is not fully thread-safe, but separate figures are OK
+    with ThreadPoolExecutor(max_workers=4, thread_name_prefix="viz") as pool:
+        f_wave = pool.submit(generate_waveform, y, sr, speech_regions)
+        f_spec = pool.submit(generate_spectrogram, y, sr)
+        f_loud = pool.submit(generate_loudness, y, sr)
+        f_spk = pool.submit(generate_speaker_timeline, speaker_info, duration)
+
     return Visualizations(
-        waveform=waveform,
-        spectrogram=spectrogram,
-        loudness=loudness,
-        speakers=speakers,
+        waveform=f_wave.result(),
+        spectrogram=f_spec.result(),
+        loudness=f_loud.result(),
+        speakers=f_spk.result(),
     )
