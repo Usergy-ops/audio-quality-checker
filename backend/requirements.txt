@@ -17,3 +17,4 @@ matplotlib==3.9.4
 
 # Pydantic (comes with FastAPI but pin it)
 pydantic==2.10.4
+slowapi==0.1.9

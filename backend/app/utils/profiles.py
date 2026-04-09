@@ -76,6 +76,10 @@ PROFILES = {
 }
 
 
+# Valid analysis modes
+VALID_MODES = ["quick", "deep"]
+
+
 def get_profile(name: str) -> dict:
     """Get a compliance profile by name. Falls back to default."""
     return PROFILES.get(name, PROFILES["default"])
@@ -87,3 +91,13 @@ def get_profile_names() -> list[dict]:
         {"id": k, "name": v["name"], "description": v["description"]}
         for k, v in PROFILES.items()
     ]
+
+
+def is_valid_profile(name: str) -> bool:
+    """Check if profile name is valid."""
+    return name in PROFILES
+
+
+def is_valid_mode(mode: str) -> bool:
+    """Check if analysis mode is valid."""
+    return mode in VALID_MODES

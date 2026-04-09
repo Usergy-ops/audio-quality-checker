@@ -28,6 +28,52 @@ let uploadedFileBlob = null;
 let wavesurferInstance = null;
 let stageInterval = null;
 
+// ── Toast Notification System ──
+const toastContainer = document.getElementById('toast-container');
+const TOAST_ICONS = {
+    error: '❌',
+    success: '✅',
+    warning: '⚠️',
+    info: 'ℹ️'
+};
+
+function showToast(message, type = 'error', title = null, duration = 6000) {
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    
+    const defaultTitles = {
+        error: 'Error',
+        success: 'Success',
+        warning: 'Warning',
+        info: 'Info'
+    };
+    const displayTitle = title || defaultTitles[type] || 'Notice';
+    
+    toast.innerHTML = `
+        <span class="toast-icon">${TOAST_ICONS[type] || 'ℹ️'}</span>
+        <div class="toast-content">
+            <div class="toast-title">${displayTitle}</div>
+            <div class="toast-message">${message}</div>
+        </div>
+        <button class="toast-close" aria-label="Close">&times;</button>
+    `;
+    
+    toastContainer.appendChild(toast);
+    
+    const close = () => {
+        toast.classList.add('toast-hiding');
+        setTimeout(() => toast.remove(), 250);
+    };
+    
+    toast.querySelector('.toast-close').addEventListener('click', close);
+    
+    if (duration > 0) {
+        setTimeout(close, duration);
+    }
+    
+    return toast;
+}
+
 const STAGES_QUICK = [
     'Extracting file metadata...',
     'Analyzing signal quality...',
@@ -141,7 +187,7 @@ function setupUpload() {
 function handleFile(file) {
     // Validate size
     if (file.size > 1073741824) {
-        alert('File too large. Maximum is 1 GB.');
+        showToast('File too large. Maximum file size is 1 GB.', 'error', 'File Too Large');
         return;
     }
     uploadedFileBlob = file;
@@ -1061,7 +1107,7 @@ function showError(msg) {
     retainLabel.classList.remove('hidden');
     document.getElementById('analysis-mode').classList.remove('hidden');
     document.getElementById('profile-selector').classList.remove('hidden');
-    alert(msg);
+    showToast(msg, 'error', 'Analysis Failed', 8000);
 }
 
 function toDataItem([label, value, cls]) {

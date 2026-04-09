@@ -1,5 +1,6 @@
 """
 Audio Quality Checker - Analysis endpoint
+With rate limiting and input validation.
 """
 import time
 import asyncio
@@ -7,15 +8,21 @@ import traceback
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
 
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends, Request
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from app.config import MAX_FILE_SIZE_BYTES
 from app.models.schemas import AnalysisResponse, ErrorResponse
-from app.utils.audio import validate_file, save_temp_file, cleanup_temp_file, save_upload
+from app.utils.audio import validate_file, validate_audio_content, save_temp_file, cleanup_temp_file, save_upload
 from app.utils.api_auth import optional_api_key
+from app.utils.profiles import is_valid_mode, is_valid_profile, VALID_MODES, PROFILES
 from app.analyzers.pipeline import run_analysis_pipeline
 
 router = APIRouter()
+
+# Rate limiter (shared with main app)
+limiter = Limiter(key_func=get_remote_address)
 
 # Dedicated thread pool for analysis (prevents exhausting default pool)
 _analysis_pool = ThreadPoolExecutor(max_workers=4, thread_name_prefix="analysis")
@@ -25,7 +32,9 @@ ANALYSIS_TIMEOUT = 600  # 10 minutes — large files on CPU need time
 
 
 @router.post("/analyze", response_model=AnalysisResponse)
+@limiter.limit("10/minute")  # 10 analyses per minute per IP
 async def analyze_audio(
+    request: Request,  # Required for rate limiting
     file: UploadFile = File(...),
     retain: bool = Form(True),
     profile: str = Form("default"),
@@ -40,7 +49,23 @@ async def analyze_audio(
     
     retain: If true, file is kept for improving the tool. Default: true.
     mode: "quick" (fast, essential metrics) or "deep" (full AI analysis). Default: quick.
+    profile: Compliance profile to check against. Default: default.
     """
+    # Validate mode parameter
+    if not is_valid_mode(mode):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid mode '{mode}'. Must be one of: {', '.join(VALID_MODES)}"
+        )
+    
+    # Validate profile parameter
+    if not is_valid_profile(profile):
+        valid_profiles = list(PROFILES.keys())
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid profile '{profile}'. Must be one of: {', '.join(valid_profiles)}"
+        )
+    
     start_time = time.time()
     temp_path = None
     timed_out = False
@@ -58,6 +83,12 @@ async def analyze_audio(
         # Save to temp
         temp_path = save_temp_file(content, file.filename or "upload.wav")
         del content  # Free memory
+        
+        # Validate audio content (check for actual audio stream)
+        is_valid_audio, audio_error = validate_audio_content(temp_path)
+        if not is_valid_audio:
+            cleanup_temp_file(temp_path)
+            raise HTTPException(status_code=400, detail=audio_error)
         
         # Run analysis pipeline in thread pool with timeout
         loop = asyncio.get_event_loop()
@@ -107,7 +138,9 @@ async def analyze_audio(
 
 
 @router.post("/analyze-batch")
+@limiter.limit("5/minute")  # 5 batch analyses per minute per IP
 async def analyze_batch(
+    request: Request,  # Required for rate limiting
     files: list[UploadFile] = File(...),
     profile: str = Form("default"),
     mode: str = Form("quick"),
@@ -118,7 +151,23 @@ async def analyze_batch(
     Max 20 files per batch.
     
     mode: "quick" (fast, essential metrics) or "deep" (full AI analysis). Default: quick.
+    profile: Compliance profile to check against. Default: default.
     """
+    # Validate mode parameter
+    if not is_valid_mode(mode):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid mode '{mode}'. Must be one of: {', '.join(VALID_MODES)}"
+        )
+    
+    # Validate profile parameter
+    if not is_valid_profile(profile):
+        valid_profiles = list(PROFILES.keys())
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid profile '{profile}'. Must be one of: {', '.join(valid_profiles)}"
+        )
+    
     if len(files) > 20:
         raise HTTPException(status_code=400, detail="Maximum 20 files per batch.")
     if len(files) == 0:

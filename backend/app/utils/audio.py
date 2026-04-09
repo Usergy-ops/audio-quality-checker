@@ -48,7 +48,55 @@ def validate_file(filename: str, file_size: int) -> tuple[bool, str]:
         file_mb = file_size / (1024 * 1024)
         return False, f"File too large ({file_mb:.1f} MB). Maximum: {max_mb:.0f} MB"
     
+    # Minimum file size check (1KB) - empty or near-empty files are invalid
+    if file_size < 1024:
+        return False, "File too small. Audio files must be at least 1 KB."
+    
     return True, ""
+
+
+def validate_audio_content(filepath: Path) -> tuple[bool, str]:
+    """Validate that file contains actual audio content using ffprobe."""
+    try:
+        result = subprocess.run(
+            [
+                "ffprobe", "-v", "error",
+                "-select_streams", "a:0",
+                "-show_entries", "stream=codec_type,duration",
+                "-of", "json",
+                str(filepath)
+            ],
+            capture_output=True,
+            timeout=10,
+        )
+        
+        if result.returncode != 0:
+            stderr = result.stderr.decode()[:200]
+            return False, f"Invalid or corrupt audio file: {stderr}"
+        
+        data = json.loads(result.stdout)
+        streams = data.get("streams", [])
+        
+        if not streams:
+            return False, "No audio stream found in file. Please upload a valid audio file."
+        
+        # Check for valid duration
+        duration = streams[0].get("duration")
+        if duration:
+            dur_float = float(duration)
+            if dur_float < 0.1:
+                return False, "Audio too short. Minimum duration is 0.1 seconds."
+            if dur_float > 14400:  # 4 hours
+                return False, "Audio too long. Maximum duration is 4 hours."
+        
+        return True, ""
+        
+    except subprocess.TimeoutExpired:
+        return False, "Audio validation timed out. File may be corrupt."
+    except json.JSONDecodeError:
+        return False, "Could not parse audio metadata. File may be corrupt."
+    except Exception as e:
+        return False, f"Error validating audio: {str(e)[:100]}"
 
 
 def save_temp_file(content: bytes, filename: str) -> Path:
