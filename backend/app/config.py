@@ -38,7 +38,7 @@ SUPPORTED_MIMETYPES = {
 # Analysis settings
 WHISPER_MODEL = "tiny"  # tiny = 75MB, fast, good enough for language detection
 LANGUAGE_DETECTION_MAX_SECONDS = 30  # Only analyze first 30s for language
-SPEAKER_DETECTION_MAX_SECONDS = 120  # First 2 minutes for speaker diarization (enough for accurate count)
+SPEAKER_DETECTION_MAX_SECONDS = 60  # First 60s for speaker diarization (enough for accurate count, fast on CPU)
 
 # Quality scoring weights
 QUALITY_WEIGHTS = {

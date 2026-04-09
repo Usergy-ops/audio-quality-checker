@@ -29,18 +29,37 @@ const ANALYSIS_STAGES = [
     'Counting speakers...',
     'Computing quality score...',
     'Generating visualizations...',
-    'Almost done...',
+    'Finalizing report...',
 ];
+const WAIT_MESSAGES = [
+    'Still processing — larger files take longer...',
+    'Deep analysis in progress...',
+    'Running speaker diarization (CPU-intensive)...',
+    'Crunching the numbers...',
+    'Hang tight — almost there...',
+    'Generating detailed visualizations...',
+    'Still working — quality takes time...',
+];
+let stageStart = 0;
 
 function startStages() {
     let i = 0;
+    let waitIdx = 0;
+    stageStart = Date.now();
     if (stageInterval) clearInterval(stageInterval);
     stageInterval = setInterval(() => {
+        const elapsed = Math.round((Date.now() - stageStart) / 1000);
+        const timer = `<span style="color:#888;font-size:0.85em;margin-left:8px">${elapsed}s</span>`;
         if (i < ANALYSIS_STAGES.length) {
-            progressStatus.innerHTML = `<span class="spinner"></span>${ANALYSIS_STAGES[i]}`;
+            progressStatus.innerHTML = `<span class="spinner"></span>${ANALYSIS_STAGES[i]}${timer}`;
             i++;
+        } else {
+            // Cycle through wait messages so it never looks stuck
+            const msg = WAIT_MESSAGES[waitIdx % WAIT_MESSAGES.length];
+            progressStatus.innerHTML = `<span class="spinner"></span>${msg}${timer}`;
+            waitIdx++;
         }
-    }, 1500);
+    }, 2000);
 }
 
 function stopStages() {
@@ -138,10 +157,10 @@ function handleFile(file) {
     });
 
     xhr.addEventListener('error', () => showError('Network error. Check your connection.'));
-    xhr.addEventListener('timeout', () => showError('Analysis timed out. Try a smaller file.'));
+    xhr.addEventListener('timeout', () => showError('Analysis timed out. The file may be too large for CPU processing. This will be much faster on GPU.'));
 
     xhr.open('POST', `${API_BASE}/api/analyze`);
-    xhr.timeout = 200000; // 200s (slightly above server's 180s timeout)
+    xhr.timeout = 600000; // 10 minutes — large files on CPU take time
     xhr.send(formData);
 }
 

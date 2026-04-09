@@ -20,7 +20,7 @@ router = APIRouter()
 _analysis_pool = ThreadPoolExecutor(max_workers=2, thread_name_prefix="analysis")
 
 # Server-side analysis timeout (seconds)
-ANALYSIS_TIMEOUT = 180  # 3 minutes
+ANALYSIS_TIMEOUT = 600  # 10 minutes — large files on CPU need time
 
 
 @router.post("/analyze", response_model=AnalysisResponse)
