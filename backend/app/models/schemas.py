@@ -119,6 +119,15 @@ class ReverbAnalysis(BaseModel):
     reverb_score: float
 
 
+class EmotionAnalysis(BaseModel):
+    primary_tone: str
+    valence: float
+    arousal: float
+    confidence: float
+    description: str
+    features: dict[str, float]
+
+
 class AIAnalysis(BaseModel):
     language: Optional[LanguageInfo] = None
     speech_activity: Optional[SpeechActivityInfo] = None
@@ -127,6 +136,7 @@ class AIAnalysis(BaseModel):
     noise_classification: Optional[NoiseClassification] = None
     transcription: Optional[TranscriptionPreview] = None
     reverb: Optional[ReverbAnalysis] = None
+    emotion: Optional[EmotionAnalysis] = None
 
 
 class ScoreBreakdown(BaseModel):

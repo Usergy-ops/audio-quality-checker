@@ -193,6 +193,7 @@ function showResults(r) {
     safe(() => renderNoise(r.ai_analysis), 'noise');
     safe(() => renderTranscription(r.ai_analysis), 'transcription');
     safe(() => renderReverb(r.ai_analysis), 'reverb');
+    safe(() => renderEmotion(r.ai_analysis), 'emotion');
     safe(() => renderBreakdown(r.quality), 'breakdown');
     safe(() => renderCompliance(r.compliance), 'compliance');
     safe(() => renderViz(r.visualizations), 'viz');
@@ -645,6 +646,58 @@ function renderReverb(a) {
         html += `<span class="data-sub">${rv.echo_delay_ms}ms delay, ${rv.echo_strength_db}dB</span>`;
     }
     html += '</div></div>';
+
+    display.innerHTML = html;
+}
+
+// Emotion / Tone
+
+function renderEmotion(a) {
+    const card = document.getElementById('emotion-card');
+    if (!a || !a.emotion) {
+        card.classList.add('hidden');
+        return;
+    }
+    card.classList.remove('hidden');
+    const em = a.emotion;
+    const display = document.getElementById('emotion-display');
+
+    const toneIcons = {
+        'calm': '\ud83d\ude0c', 'neutral': '\ud83d\ude10', 'warm': '\u2600\ufe0f',
+        'energetic': '\u26a1', 'tense': '\ud83d\ude23', 'intense': '\ud83d\udd25',
+        'flat': '\u27a1\ufe0f', 'dynamic': '\ud83c\udfb5', 'non_speech': '\ud83d\udd07',
+    };
+    const icon = toneIcons[em.primary_tone] || '\ud83c\udfa4';
+    const toneLabel = em.primary_tone.replace('_', ' ').replace(/^\w/, c => c.toUpperCase());
+
+    // Valence-arousal visualization
+    const vx = ((em.valence + 1) / 2) * 100; // 0-100
+    const vy = (1 - em.arousal) * 100; // inverted (top = high arousal)
+
+    let html = `<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+        <span style="font-size:2rem">${icon}</span>
+        <div>
+            <div style="font-weight:600;font-size:1.1rem">${toneLabel}</div>
+            <div style="color:var(--text-3);font-size:0.85rem">${em.description}</div>
+            <div style="color:var(--text-3);font-size:0.8rem;margin-top:2px">Confidence: ${em.confidence}%</div>
+        </div>
+    </div>`;
+
+    // Valence-Arousal space (mini visualization)
+    html += `<div style="position:relative;width:160px;height:160px;background:var(--bg-2);border-radius:10px;margin:0 auto 12px">
+        <div style="position:absolute;top:4px;left:50%;transform:translateX(-50%);font-size:0.7rem;color:var(--text-3)">Excited</div>
+        <div style="position:absolute;bottom:4px;left:50%;transform:translateX(-50%);font-size:0.7rem;color:var(--text-3)">Calm</div>
+        <div style="position:absolute;left:4px;top:50%;transform:translateY(-50%);font-size:0.7rem;color:var(--text-3)">-</div>
+        <div style="position:absolute;right:4px;top:50%;transform:translateY(-50%);font-size:0.7rem;color:var(--text-3)">+</div>
+        <div style="position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--border)"></div>
+        <div style="position:absolute;top:50%;left:0;right:0;height:1px;background:var(--border)"></div>
+        <div style="position:absolute;left:${vx}%;top:${vy}%;transform:translate(-50%,-50%);width:14px;height:14px;background:var(--accent);border-radius:50%;border:2px solid white"></div>
+    </div>`;
+
+    html += `<div class="data-grid">
+        <div class="data-item"><span class="data-label">Valence</span><span class="data-value">${em.valence > 0 ? '+' : ''}${em.valence}</span><span class="data-sub">${em.valence > 0.1 ? 'Positive' : em.valence < -0.1 ? 'Negative' : 'Neutral'}</span></div>
+        <div class="data-item"><span class="data-label">Arousal</span><span class="data-value">${em.arousal}</span><span class="data-sub">${em.arousal > 0.5 ? 'High energy' : em.arousal > 0.25 ? 'Moderate' : 'Low energy'}</span></div>
+    </div>`;
 
     display.innerHTML = html;
 }

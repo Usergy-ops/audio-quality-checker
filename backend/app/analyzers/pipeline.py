@@ -21,6 +21,7 @@ from app.analyzers.nisqa import assess_speech_quality
 from app.analyzers.noise import analyze_noise_types
 from app.analyzers.transcription import transcribe_preview
 from app.analyzers.reverb import analyze_reverb
+from app.analyzers.emotion import analyze_emotion
 from app.utils.audio import convert_to_wav
 from app.utils.scoring import calculate_quality_score, calculate_compliance
 from app.utils.visualizations import generate_all_visualizations
@@ -127,6 +128,7 @@ def run_analysis_pipeline(
     noise_classification_info = None
     transcription_info = None
     reverb_info = None
+    emotion_info = None
     
     ai_tasks = {}
     with ThreadPoolExecutor(max_workers=4, thread_name_prefix="ai") as ai_pool:
@@ -138,6 +140,7 @@ def run_analysis_pipeline(
             ai_tasks['noise'] = ai_pool.submit(analyze_noise_types, audio=audio_data, sr=sr)
             ai_tasks['transcription'] = ai_pool.submit(transcribe_preview, audio_data=audio_data, sample_rate=sr)
             ai_tasks['reverb'] = ai_pool.submit(analyze_reverb, audio=audio_data, sr=sr)
+            ai_tasks['emotion'] = ai_pool.submit(analyze_emotion, audio=audio_data, sr=sr)
         else:
             ai_tasks['language'] = ai_pool.submit(detect_language, filepath=wav_path)
             ai_tasks['vad'] = ai_pool.submit(detect_speech_activity, filepath=wav_path)
@@ -168,12 +171,16 @@ def run_analysis_pipeline(
                 if result and isinstance(result, dict):
                     from app.models.schemas import ReverbAnalysis
                     reverb_info = ReverbAnalysis(**result)
+            elif name == 'emotion':
+                if result and isinstance(result, dict):
+                    from app.models.schemas import EmotionAnalysis
+                    emotion_info = EmotionAnalysis(**result)
         except Exception as e:
             errors.append(f"{name} failed: {str(e)[:200]}")
             traceback.print_exc()
     
     # Build AI analysis object
-    if language_info or speech_activity_info or speaker_info or speech_quality_info or noise_classification_info or transcription_info or reverb_info:
+    if language_info or speech_activity_info or speaker_info or speech_quality_info or noise_classification_info or transcription_info or reverb_info or emotion_info:
         ai_analysis = AIAnalysis(
             language=language_info,
             speech_activity=speech_activity_info,
@@ -182,6 +189,7 @@ def run_analysis_pipeline(
             noise_classification=noise_classification_info,
             transcription=transcription_info,
             reverb=reverb_info,
+            emotion=emotion_info,
         )
     
     # ── Step 5: Quality Scoring ──
