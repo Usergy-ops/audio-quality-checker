@@ -141,7 +141,7 @@ function handleFile(file) {
     xhr.addEventListener('timeout', () => showError('Analysis timed out. Try a smaller file.'));
 
     xhr.open('POST', `${API_BASE}/api/analyze`);
-    xhr.timeout = 300000;
+    xhr.timeout = 200000; // 200s (slightly above server's 180s timeout)
     xhr.send(formData);
 }
 

@@ -51,19 +51,29 @@ LANGUAGE_NAMES = {
 }
 
 
-def detect_language(filepath: Path) -> LanguageInfo:
+def detect_language(filepath: Path = None, audio_data: np.ndarray = None, sample_rate: int = 16000) -> LanguageInfo:
     """
     Detect the language of an audio file using Whisper.
     Only processes the first N seconds (configurable) for speed.
     
+    Can accept either a filepath or pre-loaded audio_data.
     Returns LanguageInfo with detected language, confidence, and alternatives.
     """
     model = _get_model()
     
-    # Load only the first N seconds (no need to load entire file)
-    import librosa
-    audio_np, _ = librosa.load(str(filepath), sr=16000, mono=True, duration=LANGUAGE_DETECTION_MAX_SECONDS)
-    audio = audio_np.astype(np.float32)
+    if audio_data is not None:
+        # Use pre-loaded audio — resample to 16kHz if needed
+        import librosa
+        if sample_rate != 16000:
+            audio_data = librosa.resample(audio_data, orig_sr=sample_rate, target_sr=16000)
+        max_samples = LANGUAGE_DETECTION_MAX_SECONDS * 16000
+        audio = audio_data[:max_samples].astype(np.float32)
+    else:
+        # Load from file — only first N seconds
+        import librosa
+        audio_np, _ = librosa.load(str(filepath), sr=16000, mono=True, duration=LANGUAGE_DETECTION_MAX_SECONDS)
+        audio = audio_np.astype(np.float32)
+    
     print(f"[Language Detection] Processing {len(audio)/16000:.1f}s of audio (cap: {LANGUAGE_DETECTION_MAX_SECONDS}s)")
     
     # Pad/trim to 30 seconds (Whisper's expected input)

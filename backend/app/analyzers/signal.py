@@ -4,7 +4,6 @@ Core signal analysis using librosa: peak, RMS, dynamic range, DC offset.
 """
 import numpy as np
 import librosa
-import soundfile as sf
 from pathlib import Path
 
 

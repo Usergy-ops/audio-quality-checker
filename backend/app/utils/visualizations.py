@@ -8,14 +8,12 @@ import numpy as np
 import matplotlib
 matplotlib.use('Agg')  # Non-interactive backend
 import matplotlib.pyplot as plt
-import matplotlib.colors as mcolors
 import librosa
 import librosa.display
 
 from app.models.schemas import Visualizations, SpeechActivityInfo, SpeakerInfo
 
 # Brand colors — light theme to match frontend
-DEEP_INDIGO = '#1B2845'
 ELECTRIC_TEAL = '#00897B'
 WARM_SAFFRON = '#F5A623'
 SLATE_GRAY = '#888888'
@@ -90,7 +88,7 @@ def generate_waveform(y: np.ndarray, sr: int, speech_regions: list = None) -> st
     ax.set_ylabel('Amplitude', color=SLATE_GRAY, fontsize=9)
     ax.set_title('Waveform', color=TITLE_COLOR, fontsize=11, fontweight='bold', pad=10)
     ax.tick_params(colors=SLATE_GRAY, labelsize=8)
-    ax.grid(True, alpha=0.2, color=GRID_COLOR)
+    ax.grid(True, alpha=0.5, color=GRID_COLOR)
     
     for spine in ax.spines.values():
         spine.set_color(GRID_COLOR)
@@ -171,7 +169,7 @@ def generate_loudness(y: np.ndarray, sr: int) -> str:
     ax.set_ylabel('Loudness (dB)', color=SLATE_GRAY, fontsize=9)
     ax.set_title('Loudness Over Time', color=TITLE_COLOR, fontsize=11, fontweight='bold', pad=10)
     ax.tick_params(colors=SLATE_GRAY, labelsize=8)
-    ax.grid(True, alpha=0.2, color=GRID_COLOR)
+    ax.grid(True, alpha=0.5, color=GRID_COLOR)
     ax.legend(fontsize=7, loc='upper right', facecolor=BG_COLOR, edgecolor=GRID_COLOR, labelcolor=SLATE_GRAY)
     
     for spine in ax.spines.values():
@@ -209,7 +207,7 @@ def generate_speaker_timeline(speaker_info: SpeakerInfo, duration: float) -> str
     ax.set_xlabel('Time (s)', color=SLATE_GRAY, fontsize=9)
     ax.set_title('Speaker Timeline', color=TITLE_COLOR, fontsize=11, fontweight='bold', pad=10)
     ax.tick_params(colors=SLATE_GRAY, labelsize=8)
-    ax.grid(True, axis='x', alpha=0.2, color=GRID_COLOR)
+    ax.grid(True, axis='x', alpha=0.5, color=GRID_COLOR)
     
     for spine in ax.spines.values():
         spine.set_color(GRID_COLOR)

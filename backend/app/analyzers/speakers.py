@@ -66,34 +66,37 @@ def _get_pipeline():
         return None
 
 
-def count_speakers(filepath: Path, max_duration: float = 300) -> SpeakerInfo:
+def count_speakers(filepath: Path = None, audio_data: np.ndarray = None, sample_rate: int = 16000, max_duration: float = 300) -> SpeakerInfo:
     """
     Count speakers and produce a diarization timeline.
     
-    Args:
-        filepath: Path to audio file (WAV preferred)
-        max_duration: Maximum audio duration to process (seconds)
-    
-    Returns SpeakerInfo with count, timeline, distribution.
-    Falls back to basic estimation if pyannote isn't available.
+    Can accept either a filepath or pre-loaded audio_data (numpy array).
     """
     pipeline = _get_pipeline()
     
     if pipeline is None:
-        # Fallback: return unknown speaker info
         return SpeakerInfo(
-            count=0,
-            timeline=[],
-            distribution={},
-            turn_count=0,
-            overlap_percentage=0.0,
+            count=0, timeline=[], distribution={},
+            turn_count=0, overlap_percentage=0.0,
         )
     
     try:
-        # Preload audio as waveform to avoid torchcodec issues
-        # Cap duration to avoid extremely long processing on CPU
         max_secs = min(max_duration, SPEAKER_DETECTION_MAX_SECONDS)
-        waveform_np, sr = librosa.load(str(filepath), sr=16000, mono=True, duration=max_secs)
+        
+        if audio_data is not None:
+            # Use pre-loaded audio — resample to 16kHz if needed
+            if sample_rate != 16000:
+                audio_16k = librosa.resample(audio_data, orig_sr=sample_rate, target_sr=16000)
+            else:
+                audio_16k = audio_data
+            # Cap duration
+            max_samples = int(max_secs * 16000)
+            audio_16k = audio_16k[:max_samples]
+            waveform_np = audio_16k
+        else:
+            # Load from file with duration cap
+            waveform_np, _ = librosa.load(str(filepath), sr=16000, mono=True, duration=max_secs)
+        
         print(f"[Speaker Diarization] Processing {len(waveform_np)/16000:.1f}s of audio (cap: {max_secs}s)")
         waveform_tensor = torch.from_numpy(waveform_np).unsqueeze(0).float()
         audio_input = {"waveform": waveform_tensor, "sample_rate": 16000}

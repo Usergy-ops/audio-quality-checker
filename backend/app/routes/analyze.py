@@ -38,6 +38,7 @@ async def analyze_audio(
     """
     start_time = time.time()
     temp_path = None
+    timed_out = False
     
     try:
         # Read file content
@@ -66,6 +67,7 @@ async def analyze_audio(
         try:
             result = await asyncio.wait_for(future, timeout=ANALYSIS_TIMEOUT)
         except asyncio.TimeoutError:
+            timed_out = True
             raise HTTPException(
                 status_code=504,
                 detail=f"Analysis timed out after {ANALYSIS_TIMEOUT} seconds. Try a smaller file."
@@ -89,9 +91,9 @@ async def analyze_audio(
             detail=f"Analysis failed: {str(e)[:200]}"
         )
     finally:
-        # Always cleanup temp files
-        if temp_path:
+        # Don't cleanup temp files on timeout — the analysis thread may still be reading them.
+        # Orphaned temp files are acceptable; they'll be cleaned on next restart.
+        if temp_path and not timed_out:
             cleanup_temp_file(temp_path)
-            # Also cleanup any converted file
             converted = temp_path.with_suffix(".converted.wav")
             cleanup_temp_file(converted)

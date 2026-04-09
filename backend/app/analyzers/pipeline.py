@@ -55,12 +55,18 @@ def run_analysis_pipeline(
         traceback.print_exc()
     
     # ── Step 3: Signal analysis (librosa) ──
+    # This loads the audio ONCE — all subsequent analyzers reuse this data
     audio_data = None
     sr = None
     try:
         signal_result = analyze_signal(wav_path)
         audio_data = signal_result.pop("audio_data")
         sr = signal_result.pop("sr")
+        # Remove extra keys not needed downstream
+        signal_result.pop("sample_rate", None)
+        signal_result.pop("num_samples", None)
+        signal_result.pop("peak_amplitude_linear", None)
+        signal_result.pop("rms_level_linear", None)
         
         # Step 3a: Clipping detection
         try:
@@ -107,27 +113,37 @@ def run_analysis_pipeline(
         traceback.print_exc()
     
     # ── Step 4: AI Analysis ──
+    # Reuse audio_data from signal analysis — no redundant file reads
     language_info = None
     speech_activity_info = None
     speaker_info = None
     
     # 4a: Language detection (Whisper)
     try:
-        language_info = detect_language(wav_path)
+        if audio_data is not None:
+            language_info = detect_language(audio_data=audio_data, sample_rate=sr)
+        else:
+            language_info = detect_language(filepath=wav_path)
     except Exception as e:
         errors.append(f"Language detection failed: {str(e)[:200]}")
         traceback.print_exc()
     
     # 4b: Speech activity detection (Silero VAD)
     try:
-        speech_activity_info = detect_speech_activity(wav_path)
+        if audio_data is not None:
+            speech_activity_info = detect_speech_activity(audio_data=audio_data, sample_rate=sr)
+        else:
+            speech_activity_info = detect_speech_activity(filepath=wav_path)
     except Exception as e:
         errors.append(f"Speech activity detection failed: {str(e)[:200]}")
         traceback.print_exc()
     
     # 4c: Speaker diarization (pyannote)
     try:
-        speaker_info = count_speakers(wav_path)
+        if audio_data is not None:
+            speaker_info = count_speakers(audio_data=audio_data, sample_rate=sr)
+        else:
+            speaker_info = count_speakers(filepath=wav_path)
     except Exception as e:
         errors.append(f"Speaker diarization failed: {str(e)[:200]}")
         traceback.print_exc()

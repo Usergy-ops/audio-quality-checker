@@ -30,31 +30,38 @@ def _get_vad():
     return _vad_model, _vad_utils
 
 
-def _load_audio_16k(filepath: Path) -> torch.Tensor:
+def _load_audio_16k(filepath: Path, max_duration: float = None) -> torch.Tensor:
     """Load audio as 16kHz mono tensor using librosa (avoids torchcodec issues)."""
-    y, _ = librosa.load(str(filepath), sr=16000, mono=True)
+    y, _ = librosa.load(str(filepath), sr=16000, mono=True, duration=max_duration)
     return torch.FloatTensor(y)
 
 
-def detect_speech_activity(filepath: Path) -> SpeechActivityInfo:
+def detect_speech_activity(filepath: Path = None, audio_data: np.ndarray = None, sample_rate: int = 16000) -> SpeechActivityInfo:
     """
     Detect speech vs silence/noise using Silero VAD.
     
+    Can accept either a filepath or pre-loaded audio_data (numpy array).
     Returns SpeechActivityInfo with speech %, regions, longest segments.
     """
     model, utils = _get_vad()
     get_speech_timestamps = utils[0]
     
-    # Load audio at 16kHz using librosa (reliable, no torchcodec dependency)
-    # Cap duration to avoid slow processing on very long files
-    wav = _load_audio_16k(filepath)
+    if audio_data is not None:
+        # Use pre-loaded audio — resample to 16kHz if needed
+        if sample_rate != 16000:
+            audio_resampled, _ = librosa.load(str(filepath), sr=16000, mono=True, duration=VAD_MAX_SECONDS) if filepath else (librosa.resample(audio_data, orig_sr=sample_rate, target_sr=16000), None)
+            wav = torch.FloatTensor(audio_resampled[:int(VAD_MAX_SECONDS * 16000)])
+        else:
+            max_samples = int(VAD_MAX_SECONDS * 16000)
+            wav = torch.FloatTensor(audio_data[:max_samples])
+    else:
+        # Load from file with duration cap
+        wav = _load_audio_16k(filepath, max_duration=VAD_MAX_SECONDS)
+    
     duration = len(wav) / 16000
     
-    if duration > VAD_MAX_SECONDS:
-        max_samples = int(VAD_MAX_SECONDS * 16000)
-        wav = wav[:max_samples]
-        print(f"[VAD] Trimmed from {duration:.1f}s to {VAD_MAX_SECONDS}s for processing")
-        # Keep original duration for percentage calculations
+    if duration >= VAD_MAX_SECONDS:
+        print(f"[VAD] Capped at {VAD_MAX_SECONDS}s")
         analyzed_duration = VAD_MAX_SECONDS
     else:
         analyzed_duration = duration
