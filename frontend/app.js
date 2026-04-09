@@ -152,14 +152,22 @@ function showResults(r) {
     progressSection.classList.add('hidden');
     resultsSection.classList.remove('hidden');
 
-    renderScore(r.quality);
-    renderFileInfo(r.file_info);
-    renderSignal(r.signal_analysis);
-    renderAI(r.ai_analysis);
-    renderBreakdown(r.quality);
-    renderCompliance(r.compliance);
-    renderViz(r.visualizations);
-    renderErrors(r.errors);
+    const safe = (fn, name) => { try { fn(); } catch(e) { console.error(`Render ${name} failed:`, e); } };
+
+    safe(() => renderScore(r.quality), 'score');
+    safe(() => renderFileInfo(r.file_info), 'fileInfo');
+    safe(() => renderSignal(r.signal_analysis), 'signal');
+    safe(() => renderAI(r.ai_analysis), 'ai');
+    safe(() => renderBreakdown(r.quality), 'breakdown');
+    safe(() => renderCompliance(r.compliance), 'compliance');
+    safe(() => renderViz(r.visualizations), 'viz');
+    safe(() => renderErrors(r.errors), 'errors');
+
+    // Show processing time if available
+    const timeEl = document.getElementById('score-time');
+    if (timeEl && r.processing_time_seconds) {
+        timeEl.textContent = `Analyzed in ${r.processing_time_seconds}s`;
+    }
 }
 
 

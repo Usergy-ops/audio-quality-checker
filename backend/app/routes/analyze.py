@@ -2,8 +2,10 @@
 Audio Quality Checker - Analysis endpoint
 """
 import time
+import asyncio
 import traceback
 from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor
 
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 
@@ -13,6 +15,12 @@ from app.utils.audio import validate_file, save_temp_file, cleanup_temp_file, sa
 from app.analyzers.pipeline import run_analysis_pipeline
 
 router = APIRouter()
+
+# Dedicated thread pool for analysis (prevents exhausting default pool)
+_analysis_pool = ThreadPoolExecutor(max_workers=2, thread_name_prefix="analysis")
+
+# Server-side analysis timeout (seconds)
+ANALYSIS_TIMEOUT = 180  # 3 minutes
 
 
 @router.post("/analyze", response_model=AnalysisResponse)
@@ -45,12 +53,23 @@ async def analyze_audio(
         temp_path = save_temp_file(content, file.filename or "upload.wav")
         del content  # Free memory
         
-        # Run analysis pipeline
-        result = await run_analysis_pipeline(
-            filepath=temp_path,
-            original_filename=file.filename or "unknown",
-            file_size=file_size,
+        # Run analysis pipeline in thread pool with timeout
+        loop = asyncio.get_event_loop()
+        future = loop.run_in_executor(
+            _analysis_pool,
+            lambda: run_analysis_pipeline(
+                filepath=temp_path,
+                original_filename=file.filename or "unknown",
+                file_size=file_size,
+            )
         )
+        try:
+            result = await asyncio.wait_for(future, timeout=ANALYSIS_TIMEOUT)
+        except asyncio.TimeoutError:
+            raise HTTPException(
+                status_code=504,
+                detail=f"Analysis timed out after {ANALYSIS_TIMEOUT} seconds. Try a smaller file."
+            )
         
         # Save upload if user consented
         if retain:

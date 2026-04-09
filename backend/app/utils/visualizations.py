@@ -14,13 +14,15 @@ import librosa.display
 
 from app.models.schemas import Visualizations, SpeechActivityInfo, SpeakerInfo
 
-# Brand colors
+# Brand colors — light theme to match frontend
 DEEP_INDIGO = '#1B2845'
-ELECTRIC_TEAL = '#00BFA6'
+ELECTRIC_TEAL = '#00897B'
 WARM_SAFFRON = '#F5A623'
-SLATE_GRAY = '#64748B'
-BG_COLOR = '#0F172A'
-GRID_COLOR = '#1E293B'
+SLATE_GRAY = '#888888'
+BG_COLOR = '#ffffff'
+GRID_COLOR = '#e8e8e8'
+TITLE_COLOR = '#1c1c1c'
+LABEL_COLOR = '#555555'
 
 SPEAKER_COLORS = ['#00BFA6', '#F5A623', '#E74C3C', '#9B59B6', '#3498DB', '#2ECC71', '#E67E22', '#1ABC9C']
 
@@ -48,15 +50,6 @@ def _downsample_for_plot(y: np.ndarray, max_samples: int = MAX_PLOT_SAMPLES) -> 
 
 
 def _fig_to_base64(fig) -> str:
-    """Convert matplotlib figure to base64 PNG string."""
-    buf = io.BytesIO()
-    fig.savefig(buf, format='png', dpi=100, bbox_inches='tight',
-                facecolor=BG_COLOR, edgecolor='none', pad_inches=0.1)
-    plt.close(fig)
-    buf.seek(0)
-    return base64.b64encode(buf.read()).decode('utf-8')
-
-
     """Convert matplotlib figure to base64 PNG string."""
     buf = io.BytesIO()
     fig.savefig(buf, format='png', dpi=100, bbox_inches='tight',
@@ -95,7 +88,7 @@ def generate_waveform(y: np.ndarray, sr: int, speech_regions: list = None) -> st
     ax.set_ylim(-1, 1)
     ax.set_xlabel('Time (s)', color=SLATE_GRAY, fontsize=9)
     ax.set_ylabel('Amplitude', color=SLATE_GRAY, fontsize=9)
-    ax.set_title('Waveform', color='white', fontsize=11, fontweight='bold', pad=10)
+    ax.set_title('Waveform', color=TITLE_COLOR, fontsize=11, fontweight='bold', pad=10)
     ax.tick_params(colors=SLATE_GRAY, labelsize=8)
     ax.grid(True, alpha=0.2, color=GRID_COLOR)
     
@@ -122,7 +115,7 @@ def generate_spectrogram(y: np.ndarray, sr: int) -> str:
     S = librosa.feature.melspectrogram(y=y_spec, sr=sr, n_mels=128, fmax=sr // 2)
     S_dB = librosa.power_to_db(S, ref=np.max)
     
-    # Custom colormap (dark theme)
+    # Custom colormap
     img = librosa.display.specshow(
         S_dB, sr=sr, x_axis='time', y_axis='mel',
         ax=ax, cmap='magma', vmin=-80, vmax=0
@@ -135,7 +128,7 @@ def generate_spectrogram(y: np.ndarray, sr: int) -> str:
     
     ax.set_xlabel('Time (s)', color=SLATE_GRAY, fontsize=9)
     ax.set_ylabel('Frequency (Hz)', color=SLATE_GRAY, fontsize=9)
-    ax.set_title('Mel Spectrogram', color='white', fontsize=11, fontweight='bold', pad=10)
+    ax.set_title('Mel Spectrogram', color=TITLE_COLOR, fontsize=11, fontweight='bold', pad=10)
     ax.tick_params(colors=SLATE_GRAY, labelsize=8)
     
     for spine in ax.spines.values():
@@ -176,7 +169,7 @@ def generate_loudness(y: np.ndarray, sr: int) -> str:
     ax.set_ylim(-80, 0)
     ax.set_xlabel('Time (s)', color=SLATE_GRAY, fontsize=9)
     ax.set_ylabel('Loudness (dB)', color=SLATE_GRAY, fontsize=9)
-    ax.set_title('Loudness Over Time', color='white', fontsize=11, fontweight='bold', pad=10)
+    ax.set_title('Loudness Over Time', color=TITLE_COLOR, fontsize=11, fontweight='bold', pad=10)
     ax.tick_params(colors=SLATE_GRAY, labelsize=8)
     ax.grid(True, alpha=0.2, color=GRID_COLOR)
     ax.legend(fontsize=7, loc='upper right', facecolor=BG_COLOR, edgecolor=GRID_COLOR, labelcolor=SLATE_GRAY)
@@ -211,10 +204,10 @@ def generate_speaker_timeline(speaker_info: SpeakerInfo, duration: float) -> str
     
     ax.set_yticks(range(len(unique_speakers)))
     ax.set_yticklabels([f'Speaker {i+1}' for i in range(len(unique_speakers))],
-                       color=SLATE_GRAY, fontsize=9)
+                       color=LABEL_COLOR, fontsize=9)
     ax.set_xlim(0, duration)
     ax.set_xlabel('Time (s)', color=SLATE_GRAY, fontsize=9)
-    ax.set_title('Speaker Timeline', color='white', fontsize=11, fontweight='bold', pad=10)
+    ax.set_title('Speaker Timeline', color=TITLE_COLOR, fontsize=11, fontweight='bold', pad=10)
     ax.tick_params(colors=SLATE_GRAY, labelsize=8)
     ax.grid(True, axis='x', alpha=0.2, color=GRID_COLOR)
     

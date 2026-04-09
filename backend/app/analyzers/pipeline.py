@@ -22,7 +22,7 @@ from app.utils.scoring import calculate_quality_score, calculate_compliance
 from app.utils.visualizations import generate_all_visualizations
 
 
-async def run_analysis_pipeline(
+def run_analysis_pipeline(
     filepath: Path,
     original_filename: str,
     file_size: int,
