@@ -1086,7 +1086,7 @@ function setupReveal() {
 
 const PROFILE_DESCRIPTIONS = {
     'default': 'Common requirements for AI training data',
-    'defined_ai': 'Defined.ai typical RFP requirements (strict)',
+    'defined_ai': 'High-quality AI data platform requirements (strict)',
     'appen': 'Typical crowd-sourced speech collection specs',
     'common_voice': 'Open source speech dataset standards',
     'telephony': 'Telephony-grade audio (8kHz, low bandwidth)',
