@@ -1275,3 +1275,11 @@ body {
     top: 0;
 }
 .batch-table tr:hover { background: var(--bg-2); }
+
+/* Interactive Waveform */
+#waveform-container {
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--bg-2);
+    padding: 8px;
+}

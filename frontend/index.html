@@ -26,6 +26,7 @@
     <link rel="stylesheet" href="style.css">
     <link rel="canonical" href="https://usergy.ai/tools/audio-quality-checker">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23111'/%3E%3Cpath d='M10 20V12M14 22V10M18 18V14M22 20V12' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
+    <script src="https://unpkg.com/wavesurfer.js@7"></script>
 </head>
 <body>
 
@@ -219,6 +220,20 @@
                 <div class="card card-wide reveal" id="compliance-card">
                     <h3 class="card-heading">Compliance</h3>
                     <div id="compliance-list" class="compliance"></div>
+                </div>
+
+                <div class="card card-wide reveal" id="waveform-card">
+                    <h3 class="card-heading">Interactive Waveform</h3>
+                    <div id="waveform-player">
+                        <div id="waveform-container" style="margin-bottom:12px"></div>
+                        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+                            <button id="waveform-play" class="btn btn--solid" style="padding:6px 16px;font-size:0.85rem">▶ Play</button>
+                            <span id="waveform-time" style="font-family:monospace;font-size:0.9rem;color:var(--text-2)">0:00 / 0:00</span>
+                            <div style="flex:1"></div>
+                            <label style="font-size:0.85rem;color:var(--text-2)">Zoom:</label>
+                            <input type="range" id="waveform-zoom" min="1" max="500" value="1" style="width:120px">
+                        </div>
+                    </div>
                 </div>
 
                 <div class="card card-wide reveal" id="viz-card">

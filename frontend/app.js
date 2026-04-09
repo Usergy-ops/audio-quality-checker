@@ -17,6 +17,8 @@ const resultsSection = document.getElementById('results-section');
 
 // State
 let currentResult = null;
+let uploadedFileBlob = null;
+let wavesurferInstance = null;
 let stageInterval = null;
 
 const ANALYSIS_STAGES = [
@@ -113,6 +115,7 @@ function handleFile(file) {
         alert('File too large. Maximum is 1 GB.');
         return;
     }
+    uploadedFileBlob = file;
 
     const retain = document.getElementById('retain-checkbox').checked;
     const formData = new FormData();
@@ -193,6 +196,7 @@ function showResults(r) {
     safe(() => renderCompliance(r.compliance), 'compliance');
     safe(() => renderViz(r.visualizations), 'viz');
     safe(() => renderErrors(r.errors), 'errors');
+    safe(() => initWaveform(), 'waveform');
 
     // Show processing time if available
     const timeEl = document.getElementById('score-time');
@@ -518,6 +522,78 @@ function renderTranscription(a) {
     display.innerHTML = html;
 }
 
+// Interactive Waveform (Wavesurfer.js)
+
+function initWaveform() {
+    const card = document.getElementById('waveform-card');
+    if (!uploadedFileBlob || typeof WaveSurfer === 'undefined') {
+        card.classList.add('hidden');
+        return;
+    }
+    card.classList.remove('hidden');
+
+    // Destroy previous instance
+    if (wavesurferInstance) {
+        try { wavesurferInstance.destroy(); } catch (e) {}
+        wavesurferInstance = null;
+    }
+
+    const container = document.getElementById('waveform-container');
+    container.innerHTML = '';
+
+    // Detect dark mode
+    const isDark = getComputedStyle(document.documentElement).getPropertyValue('--bg-1').trim().startsWith('#1');
+
+    wavesurferInstance = WaveSurfer.create({
+        container: '#waveform-container',
+        waveColor: isDark ? '#4a9d8f' : '#00897B',
+        progressColor: isDark ? '#80cbc4' : '#26a69a',
+        cursorColor: isDark ? '#fff' : '#333',
+        barWidth: 2,
+        barGap: 1,
+        barRadius: 2,
+        height: 120,
+        responsive: true,
+        normalize: true,
+        backend: 'WebAudio',
+    });
+
+    const blobUrl = URL.createObjectURL(uploadedFileBlob);
+    wavesurferInstance.load(blobUrl);
+
+    const playBtn = document.getElementById('waveform-play');
+    const timeEl = document.getElementById('waveform-time');
+    const zoomSlider = document.getElementById('waveform-zoom');
+
+    wavesurferInstance.on('play', () => { playBtn.textContent = '\u23F8 Pause'; });
+    wavesurferInstance.on('pause', () => { playBtn.textContent = '\u25B6 Play'; });
+    wavesurferInstance.on('finish', () => { playBtn.textContent = '\u25B6 Play'; });
+
+    wavesurferInstance.on('timeupdate', (currentTime) => {
+        const dur = wavesurferInstance.getDuration();
+        timeEl.textContent = `${fmtTime(currentTime)} / ${fmtTime(dur)}`;
+    });
+
+    wavesurferInstance.on('ready', () => {
+        const dur = wavesurferInstance.getDuration();
+        timeEl.textContent = `0:00 / ${fmtTime(dur)}`;
+    });
+
+    playBtn.onclick = () => wavesurferInstance.playPause();
+
+    zoomSlider.oninput = () => {
+        const val = Number(zoomSlider.value);
+        wavesurferInstance.zoom(val);
+    };
+}
+
+function fmtTime(sec) {
+    if (!sec || isNaN(sec)) return '0:00';
+    const m = Math.floor(sec / 60);
+    const s = Math.floor(sec % 60);
+    return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
 function escHtml(str) {
     const div = document.createElement('div');
     div.textContent = str;
@@ -627,8 +703,17 @@ function reset() {
     progressSection.classList.add('hidden');
     uploadZone.classList.remove('hidden');
     retainLabel.classList.remove('hidden');
+    document.getElementById('mode-toggle').classList.remove('hidden');
+    document.getElementById('profile-selector').classList.remove('hidden');
     fileInput.value = '';
     currentResult = null;
+    uploadedFileBlob = null;
+
+    // Destroy wavesurfer
+    if (wavesurferInstance) {
+        try { wavesurferInstance.destroy(); } catch (e) {}
+        wavesurferInstance = null;
+    }
 
     // Reset ring
     const ring = document.getElementById('score-ring-fill');
