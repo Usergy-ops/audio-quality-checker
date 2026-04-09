@@ -1,208 +1,229 @@
 # Audio Quality Checker
 
-A free audio analysis tool by [UsergyAI](https://usergy.ai). Upload any audio file and get a detailed quality report: scores, signal metrics, language detection, speech analysis, compliance checks, and visualizations.
+**Deep audio analysis tool for the AI data industry.**
+
+Upload any audio file and get instant quality analysis: signal metrics, language detection, speaker count, speech quality (MOS), noise classification, and compliance checks against industry standards.
+
+![Version](https://img.shields.io/badge/version-4.6.0-blue)
+![Python](https://img.shields.io/badge/python-3.11+-green)
+![License](https://img.shields.io/badge/license-Proprietary-red)
 
 ## Features
 
-| Category | What you get |
-|----------|-------------|
-| File info | Format, codec, duration, sample rate, bit depth, bit rate, channels, file size |
-| Signal analysis | Peak amplitude, RMS level, dynamic range, SNR, DC offset |
-| Clipping detection | Clipped sample count, percentage, timestamped regions |
-| Silence analysis | Silent regions, percentage, longest silent stretch |
-| Language detection | 99 languages with confidence scores (Whisper tiny) |
-| Speech activity | Speech vs. noise regions with timestamps (Silero VAD) |
-| Speaker count | Number of distinct speakers and timeline (pyannote) |
-| Quality score | Weighted 0-100 across 9 components, graded A+ through F |
-| Compliance | Pass / warn / fail against common AI data project specs |
-| Visualizations | Waveform, mel spectrogram, loudness chart, speaker timeline |
+### Analysis Modes
+- **Quick Mode** (~30 sec) — Essential metrics: metadata, signal analysis, language detection, VAD
+- **Deep Mode** (~2-3 min) — Full AI analysis: speakers, MOS, noise classification, transcription, emotion
 
-**Supported formats:** WAV, MP3, FLAC, OGG, AAC, M4A, AIFF, OPUS, WebM, WMA, AMR (up to 1 GB)
+### What It Analyzes
+| Category | Metrics |
+|----------|---------|
+| **File Info** | Format, codec, duration, sample rate, bit depth, channels |
+| **Signal** | Peak/RMS levels, dynamic range, DC offset, SNR |
+| **Clipping** | Percentage, sample count, severity |
+| **Silence** | Duration, percentage, longest segment |
+| **Language** | Detection with confidence score (Whisper) |
+| **Speech Activity** | VAD percentage (Silero) |
+| **Speakers** | Count + timeline (pyannote) |
+| **Speech Quality** | MOS 1-5 score (NISQA) |
+| **Noise** | Classification + confidence (YAMNet) |
+| **Transcription** | Full text + word count (Whisper) |
+| **Reverb** | RT60 estimation |
+| **Emotion** | Primary tone detection |
 
----
+### Compliance Profiles
+Check audio against industry standards:
+- **General AI Data** — Common requirements
+- **AI Data Platform Standard** — High-quality (48kHz, 24-bit, lossless)
+- **Crowd Platform Standard** — Crowd-sourced specs
+- **Open Speech Dataset** — Open-source standards
+- **Telephony** — Call center (8kHz)
+- **Broadcast** — Podcast/radio quality
 
-## Quick Start
+### Quality Score
+0-100 score with letter grade (A/B/C/D/F) based on:
+- SNR (25%)
+- Clipping (15%)
+- Silence ratio (10%)
+- Sample rate (10%)
+- Bit depth (5%)
+- Dynamic range (10%)
+- DC offset (5%)
+- Speech clarity (10%)
+- Format quality (10%)
 
-### Prerequisites
+## Supported Formats
 
-- Python 3.12+
-- ffmpeg (`sudo apt install ffmpeg`)
-- Linux (tested on Ubuntu 24.04)
+WAV, MP3, FLAC, OGG, M4A, AAC, OPUS, WebM, AIFF, WMA, AMR
 
-### Install
+**Max file size:** 1 GB  
+**Max duration:** 4 hours
+
+## Installation
+
+### Requirements
+- Python 3.11+
+- FFmpeg (for audio processing)
+- ~4GB RAM (8GB recommended for deep mode)
+
+### Setup
 
 ```bash
+# Clone repo
+git clone https://github.com/Usergy-ops/audio-quality-checker.git
+cd audio-quality-checker
+
+# Create virtual environment
 cd backend
-python3.12 -m venv venv
-source venv/bin/activate
+python3 -m venv venv
+source venv/bin/activate  # Linux/Mac
+# or: venv\Scripts\activate  # Windows
+
+# Install dependencies
 pip install -r requirements.txt
-pip install torch==2.6.0+cpu torchaudio==2.6.0+cpu --index-url https://download.pytorch.org/whl/cpu
-```
 
-### Run
+# Install AI models (optional, for deep mode)
+pip install torch torchaudio whisper pyannote.audio
 
-```bash
+# Run server
 uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
-Open `http://localhost:8000` in your browser.
-
-### Remote access (SSH tunnel)
+### Environment Variables
 
 ```bash
-ssh -i your-key.pem -L 8000:localhost:8000 ubuntu@YOUR_SERVER_IP
+# CORS (comma-separated origins for production)
+ALLOWED_ORIGINS=https://yourdomain.com,https://api.yourdomain.com
+
+# Rate limiting (default: true)
+RATE_LIMIT_ENABLED=true
+
+# HuggingFace token (for pyannote speaker diarization)
+HF_TOKEN=your_token_here
 ```
 
-Then open `http://localhost:8000` locally. Port 8000 is not exposed via firewall; the server is only accessible through SSH tunnel.
+## API Reference
 
----
+### Analyze Audio
+```http
+POST /api/analyze
+Content-Type: multipart/form-data
 
-## API
-
-### POST /api/analyze
-
-Upload an audio file for analysis.
-
-**Parameters:**
-- `file` (required) - Audio file (multipart form)
-- `retain` (optional, default: `true`) - If `true`, file is retained for quality improvement. If `false`, file is deleted after analysis.
-
-```bash
-curl -X POST http://localhost:8000/api/analyze \
-  -F "file=@recording.wav" \
-  -F "retain=false"
+file: <audio file>
+mode: quick | deep (default: quick)
+profile: default | defined_ai | appen | common_voice | telephony | broadcast
+retain: true | false (consent to keep file)
 ```
 
-**Response:** JSON with all analysis data, quality score, compliance checks, and base64-encoded visualization images.
+### Batch Analyze
+```http
+POST /api/analyze-batch
+Content-Type: multipart/form-data
 
-### GET /health
-
-```bash
-curl http://localhost:8000/health
+files: <multiple audio files> (max 20)
+mode: quick | deep
+profile: <profile name>
 ```
 
-### Swagger docs
+### List Profiles
+```http
+GET /api/profiles
+```
 
-`http://localhost:8000/docs`
+### Health Check
+```http
+GET /health
+```
 
----
+### Rate Limits
+```http
+GET /api/limits
+```
 
-## Architecture
+**Rate Limits:**
+- `/api/analyze` — 10 requests/minute per IP
+- `/api/analyze-batch` — 5 requests/minute per IP
+- `/api/keys/generate` — 2 requests/hour per IP
+
+## Project Structure
 
 ```
 audio-quality-checker/
 ├── backend/
 │   ├── app/
-│   │   ├── main.py              # FastAPI app, static file serving, CORS
-│   │   ├── config.py            # Settings, weights, limits, paths
-│   │   ├── models/
-│   │   │   └── schemas.py       # Pydantic response models
+│   │   ├── main.py           # FastAPI app
+│   │   ├── config.py         # Configuration
 │   │   ├── routes/
-│   │   │   └── analyze.py       # POST /api/analyze endpoint
+│   │   │   └── analyze.py    # API endpoints
 │   │   ├── analyzers/
-│   │   │   ├── metadata.py      # ffprobe metadata extraction
-│   │   │   ├── signal.py        # Peak, RMS, dynamic range, DC offset
-│   │   │   ├── clipping.py      # Clipping detection
-│   │   │   ├── silence.py       # Silence regions and percentage
-│   │   │   ├── snr.py           # Signal-to-noise ratio
-│   │   │   ├── language.py      # Whisper language detection
-│   │   │   ├── vad.py           # Silero VAD speech activity
-│   │   │   ├── speakers.py      # Pyannote speaker diarization
-│   │   │   └── pipeline.py      # Orchestrates all analyzers
+│   │   │   ├── pipeline.py   # Main analysis pipeline
+│   │   │   ├── metadata.py   # File info extraction
+│   │   │   ├── signal.py     # Signal analysis
+│   │   │   ├── language.py   # Language detection
+│   │   │   ├── speakers.py   # Speaker diarization
+│   │   │   └── ...           # Other analyzers
+│   │   ├── models/
+│   │   │   └── schemas.py    # Pydantic models
 │   │   └── utils/
-│   │       ├── audio.py         # File validation, temp management, retention
-│   │       ├── scoring.py       # Quality scoring engine and compliance
-│   │       └── visualizations.py # Waveform, spectrogram, loudness, speakers
+│   │       ├── audio.py      # Audio utilities
+│   │       ├── scoring.py    # Quality scoring
+│   │       └── profiles.py   # Compliance profiles
 │   ├── requirements.txt
-│   ├── temp/                    # Temporary files (auto-cleaned)
-│   └── uploads/                 # Retained files (gitignored)
+│   └── venv/
 ├── frontend/
-│   ├── index.html               # Single page app
-│   ├── style.css                # Minimal light theme
-│   └── app.js                   # Upload, progress, results rendering
-├── tests/
-│   └── samples/                 # Test audio files
-├── docs/
-│   ├── PLAN.md                  # Build plan (all 45 steps complete)
-│   ├── FEATURES.md              # Feature specification
-│   ├── TECH-STACK.md            # Technology decisions
-│   ├── DECISIONS.md             # Architecture decisions
-│   └── ROADMAP.md               # Future enhancements
-├── backups/                     # Versioned tar.gz archives (in parent)
-├── .gitignore
-└── README.md
+│   ├── index.html
+│   ├── style.css
+│   └── app.js
+└── tests/
+    └── samples/
 ```
 
-## Quality Scoring
+## Deployment
 
-9 weighted components:
+### Production Checklist
+- [ ] Set `ALLOWED_ORIGINS` to your domain(s)
+- [ ] Set up SSL/HTTPS (use nginx + Let's Encrypt)
+- [ ] Configure systemd service for auto-start
+- [ ] Set up log rotation
+- [ ] Configure firewall (allow only 80/443)
+- [ ] Set `HF_TOKEN` for speaker diarization
 
-| Component | Weight | What it measures |
-|-----------|--------|-----------------|
-| SNR | 25% | Signal-to-noise ratio |
-| Clipping | 15% | Audio clipping percentage |
-| Silence Ratio | 10% | Excessive silence |
-| Sample Rate | 10% | Recording quality (Hz) |
-| Bit Depth | 5% | Audio resolution (bits) |
-| Dynamic Range | 10% | Volume variation (dB) |
-| DC Offset | 5% | Signal centering bias |
-| Speech Clarity | 10% | Derived from SNR + speech activity |
-| Format Quality | 10% | Lossless vs. lossy encoding |
+### Example nginx config
+```nginx
+server {
+    listen 443 ssl;
+    server_name audio.yourdomain.com;
+    
+    ssl_certificate /etc/letsencrypt/live/audio.yourdomain.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/audio.yourdomain.com/privkey.pem;
+    
+    client_max_body_size 1G;
+    
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_read_timeout 600s;
+    }
+}
+```
 
-**Grades:** A+ (95+), A (90+), B (70+), C (60+), D (40+), F (<40)
+## Development
 
----
+```bash
+# Run in development mode (auto-reload)
+uvicorn app.main:app --reload --port 8000
 
-## Tech Stack
+# Run tests
+pytest tests/
+```
 
-| Layer | Technology |
-|-------|-----------|
-| Backend | Python 3.12, FastAPI, uvicorn |
-| Audio processing | librosa, scipy, soundfile, ffmpeg (ffprobe) |
-| AI models | Whisper tiny (language), Silero VAD (speech), pyannote (speakers) |
-| Visualizations | matplotlib |
-| Frontend | Vanilla HTML / CSS / JS (no framework) |
-| Inference | CPU-only, no GPU required |
+## License
 
-## Data Retention
+Proprietary — © 2026 UsergyAI. All rights reserved.
 
-- By default, uploaded files are retained in `backend/uploads/` with metadata for quality improvement
-- Users can uncheck the consent checkbox to opt out; their file is deleted immediately after analysis
-- Temporary files are always deleted in a `finally` block regardless of success or failure
-- `uploads/` is gitignored and never committed
+## Contact
 
-## Speaker Diarization (optional)
-
-Full speaker diarization requires a HuggingFace token:
-
-1. Accept terms at https://huggingface.co/pyannote/speaker-diarization-3.1
-2. `export HF_TOKEN=your_token_here`
-3. Restart the server
-
-Without the token, speaker count returns 0 (everything else works).
-
----
-
-## Security
-
-- Port 8000 is **not exposed** via firewall; access only through SSH tunnel
-- CORS set to allow all origins (suitable for dev/internal use)
-- File uploads validated by extension and size before processing
-- Temp files cleaned in `finally` blocks (guaranteed cleanup)
-- `uploads/` and `temp/` are gitignored
-- No authentication (internal tool); add auth before public deployment
-- No secrets or API keys in source code
-- All file operations use UUID-based temp names to prevent path traversal
-
-## Version History
-
-| Version | Date | Changes |
-|---------|------|---------|
-| v2.0.0 | 2026-04-08 | Complete UI/UX redesign: light minimal theme, typography-first |
-| v1.2.0 | 2026-04-08 | Bug fixes (5) + UX improvements (7): staged messages, score colors, mobile nav |
-| v1.1.0 | 2026-04-08 | File retention with opt-in consent checkbox |
-| v1.0.0 | 2026-04-08 | Initial release: full analysis pipeline, 6 analyzers, visualizations |
-
----
-
-Built by [UsergyAI](https://usergy.ai)
+- **Website:** https://usergy.ai
+- **Email:** connect@usergy.ai
+- **Twitter:** @UsergyAI

@@ -1,14 +1,80 @@
-# Ignore
+# Python
 __pycache__/
-*.pyc
-*.pyo
-venv/
-.env
-temp/
-uploads/
-*.egg-info/
-dist/
+*.py[cod]
+*$py.class
+*.so
+.Python
 build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temp files
+temp/
+tmp/
+*.tmp
+
+# Uploads (user data)
+uploads/
+
+# API keys
+api_keys.json
+*.key
+*.pem
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Test artifacts
+.coverage
+htmlcov/
 .pytest_cache/
+.tox/
+
+# Model cache (large files)
+*.pt
+*.pth
+*.bin
+*.onnx
+whisper_cache/
+
+# Node modules (if any frontend tooling)
 node_modules/
-backend/api_keys.json
+
+# Backups
+*.bak
+*.backup
