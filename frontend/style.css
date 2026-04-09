@@ -55,9 +55,9 @@ body {
     position: sticky;
     top: 0;
     z-index: 100;
-    background: rgba(10, 22, 40, 0.85);
+    background: rgba(255,255,255,0.75);
     backdrop-filter: blur(12px);
-    border-bottom: 1px solid rgba(255,255,255,0.08);
+    border-bottom: 1px solid rgba(0,0,0,0.06);
 }
 
 .nav-inner {
@@ -75,7 +75,7 @@ body {
     align-items: center;
     gap: 10px;
     text-decoration: none;
-    color: #ffffff;
+    color: #111111;
     font-weight: 600;
     font-size: 15px;
     font-family: var(--font-display);
@@ -92,13 +92,13 @@ body {
 
 .nav-links a {
     text-decoration: none;
-    color: rgba(255,255,255,0.7);
+    color: rgba(0,0,0,0.55);
     font-size: 14px;
     font-weight: 450;
     transition: color 0.15s;
 }
 
-.nav-links a:hover { color: #ffffff; }
+.nav-links a:hover { color: #111111; }
 
 .nav-cta {
     background: var(--accent) !important;
@@ -141,14 +141,14 @@ body {
     display: inline-block;
     font-size: 12px;
     font-weight: 500;
-    color: rgba(255,255,255,0.85);
+    color: #1a1a1a;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     margin-bottom: 24px;
     padding: 6px 16px;
-    border: 1px solid rgba(255,255,255,0.15);
+    border: 1px solid rgba(0,0,0,0.12);
     border-radius: 100px;
-    background: rgba(255,255,255,0.06);
+    background: rgba(255,255,255,0.65);
     backdrop-filter: blur(8px);
 }
 
@@ -158,17 +158,18 @@ body {
     font-weight: 700;
     line-height: 1.15;
     letter-spacing: -0.035em;
-    color: #ffffff;
+    color: #111111;
     margin-bottom: 20px;
+    text-shadow: 0 1px 2px rgba(255,255,255,0.3);
 }
 
 .hero-sub {
     font-size: 17px;
-    color: rgba(255,255,255,0.65);
+    color: rgba(0,0,0,0.55);
     line-height: 1.7;
     max-width: 560px;
     margin: 0 auto 52px;
-    font-weight: 300;
+    font-weight: 400;
 }
 
 /* ── Upload ──────────────────────────────────────── */
@@ -176,11 +177,11 @@ body {
 .upload-zone {
     max-width: 560px;
     margin: 0 auto;
-    border: 1.5px dashed rgba(255,255,255,0.2);
+    border: 1.5px dashed rgba(0,0,0,0.15);
     border-radius: var(--radius-lg);
     cursor: pointer;
     transition: all 0.3s ease;
-    background: rgba(255,255,255,0.05);
+    background: rgba(255,255,255,0.55);
     backdrop-filter: blur(12px);
 }
 
@@ -1204,26 +1205,26 @@ body {
 }
 .profile-label {
     font-size: 0.85rem;
-    color: rgba(255,255,255,0.5);
+    color: rgba(0,0,0,0.5);
     font-weight: 500;
 }
 .profile-selector select {
     padding: 7px 14px;
     border-radius: 8px;
-    border: 1px solid rgba(255,255,255,0.15);
-    background: rgba(255,255,255,0.06);
-    color: rgba(255,255,255,0.85);
+    border: 1px solid rgba(0,0,0,0.1);
+    background: rgba(255,255,255,0.55);
+    color: #1a1a1a;
     font-size: 0.85rem;
     cursor: pointer;
     backdrop-filter: blur(8px);
 }
 .profile-selector select option {
-    background: #1a2a3a;
-    color: #fff;
+    background: #fff;
+    color: #1a1a1a;
 }
 .profile-desc {
     font-size: 0.8rem;
-    color: rgba(255,255,255,0.35);
+    color: rgba(0,0,0,0.35);
     font-style: italic;
 }
 
@@ -1231,19 +1232,19 @@ body {
 .mode-toggle {
     display: inline-flex;
     gap: 4px;
-    background: rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.55);
     border-radius: 12px;
     padding: 4px;
     margin-bottom: 20px;
     backdrop-filter: blur(8px);
-    border: 1px solid rgba(255,255,255,0.08);
+    border: 1px solid rgba(0,0,0,0.08);
 }
 .mode-btn {
     padding: 8px 22px;
     border: none;
     border-radius: 10px;
     background: transparent;
-    color: rgba(255,255,255,0.5);
+    color: rgba(0,0,0,0.45);
     cursor: pointer;
     font-size: 0.85rem;
     font-weight: 500;
@@ -1256,7 +1257,7 @@ body {
     box-shadow: 0 2px 8px rgba(13,148,136,0.3);
 }
 .mode-btn:hover:not(.active) {
-    color: rgba(255,255,255,0.85);
+    color: rgba(0,0,0,0.75);
 }
 
 /* Batch file list */
@@ -1374,28 +1375,28 @@ body {
 
 /* ── Dark Hero Overrides ──────────────────────────── */
 
-.hero .upload-icon { stroke: rgba(255,255,255,0.4); }
+.hero .upload-icon { stroke: rgba(0,0,0,0.35); }
 .hero .upload-browse { color: var(--accent); }
-.hero .retain { color: rgba(255,255,255,0.4); }
-.hero .retain-text { color: rgba(255,255,255,0.4); font-size: 0.8rem; }
-.hero .retain-box { border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); }
+.hero .retain { color: rgba(0,0,0,0.4); }
+.hero .retain-text { color: rgba(0,0,0,0.4); font-size: 0.8rem; }
+.hero .retain-box { border-color: rgba(0,0,0,0.15); background: rgba(255,255,255,0.5); }
 
-.hero .progress { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); }
-.hero .progress-name { color: rgba(255,255,255,0.7); }
-.hero .progress-pct { color: rgba(255,255,255,0.85); }
-.hero .progress-track { background: rgba(255,255,255,0.1); }
+.hero .progress { background: rgba(255,255,255,0.6); border: 1px solid rgba(0,0,0,0.08); }
+.hero .progress-name { color: #1a1a1a; }
+.hero .progress-pct { color: #111; }
+.hero .progress-track { background: rgba(0,0,0,0.08); }
 .hero .progress-bar { background: var(--accent); }
-.hero .progress-status { color: rgba(255,255,255,0.5); }
+.hero .progress-status { color: rgba(0,0,0,0.45); }
 
 /* Compare zone dark */
-.hero .compare-upload-box { border-color: rgba(255,255,255,0.15); background: rgba(255,255,255,0.04); }
+.hero .compare-upload-box { border-color: rgba(0,0,0,0.12); background: rgba(255,255,255,0.5); }
 .hero .compare-upload-box:hover { border-color: var(--accent); }
 .hero .compare-upload-box.has-file { border-color: var(--accent); }
-.hero .compare-vs { color: rgba(255,255,255,0.3); }
+.hero .compare-vs { color: rgba(0,0,0,0.3); }
 
 /* Batch file list dark */
-.hero .batch-file-list { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.7); }
-.hero .batch-file-item { border-color: rgba(255,255,255,0.08); }
+.hero .batch-file-list { background: rgba(255,255,255,0.6); border: 1px solid rgba(0,0,0,0.08); color: #1a1a1a; }
+.hero .batch-file-item { border-color: rgba(0,0,0,0.06); }
 
 /* ── Enhanced Typography ──────────────────────────── */
 
@@ -1431,7 +1432,7 @@ body {
 /* ── Footer Enhancement ───────────────────────────── */
 
 .footer {
-    background: #0a1628 !important;
+    background: #111827 !important;
     color: rgba(255,255,255,0.5);
 }
 
@@ -1449,4 +1450,4 @@ body {
 }
 
 /* Nav toggle color for dark hero */
-.nav-toggle { color: rgba(255,255,255,0.7); }
+.nav-toggle { color: rgba(0,0,0,0.6); }
