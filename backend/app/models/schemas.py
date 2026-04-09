@@ -94,12 +94,27 @@ class NoiseClassification(BaseModel):
     spectral_profile: dict[str, float]
 
 
+class TranscriptionSegment(BaseModel):
+    start: float
+    end: float
+    text: str
+
+
+class TranscriptionPreview(BaseModel):
+    text: str
+    segments: list[TranscriptionSegment]
+    word_count: int
+    duration_transcribed: float
+    language_used: str
+
+
 class AIAnalysis(BaseModel):
     language: Optional[LanguageInfo] = None
     speech_activity: Optional[SpeechActivityInfo] = None
     speakers: Optional[SpeakerInfo] = None
     speech_quality: Optional[SpeechQualityInfo] = None
     noise_classification: Optional[NoiseClassification] = None
+    transcription: Optional[TranscriptionPreview] = None
 
 
 class ScoreBreakdown(BaseModel):

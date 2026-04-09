@@ -188,6 +188,7 @@ function showResults(r) {
     safe(() => renderAI(r.ai_analysis), 'ai');
     safe(() => renderMOS(r.ai_analysis), 'mos');
     safe(() => renderNoise(r.ai_analysis), 'noise');
+    safe(() => renderTranscription(r.ai_analysis), 'transcription');
     safe(() => renderBreakdown(r.quality), 'breakdown');
     safe(() => renderCompliance(r.compliance), 'compliance');
     safe(() => renderViz(r.visualizations), 'viz');
@@ -476,6 +477,51 @@ function renderNoise(a) {
     html += `<div style="margin-top:10px;font-size:0.85rem;color:var(--text-3)">Noise Floor: ${nc.noise_floor_db} dB</div>`;
 
     display.innerHTML = html;
+}
+
+// Transcription Preview
+
+function renderTranscription(a) {
+    const card = document.getElementById('transcription-card');
+    if (!a || !a.transcription || !a.transcription.text) {
+        card.classList.add('hidden');
+        return;
+    }
+    card.classList.remove('hidden');
+    const t = a.transcription;
+    const display = document.getElementById('transcription-display');
+
+    let html = `<div style="margin-bottom:12px;display:flex;gap:16px;flex-wrap:wrap;font-size:0.85rem;color:var(--text-3)">
+        <span>First ${t.duration_transcribed}s</span>
+        <span>${t.word_count} words</span>
+        <span>Language: ${t.language_used}</span>
+    </div>`;
+
+    // Full text
+    html += `<div style="background:var(--bg-2);padding:16px;border-radius:10px;font-size:0.95rem;line-height:1.7;max-height:300px;overflow-y:auto;white-space:pre-wrap">${escHtml(t.text)}</div>`;
+
+    // Segments timeline
+    if (t.segments && t.segments.length > 0) {
+        html += `<details style="margin-top:12px"><summary style="cursor:pointer;font-size:0.85rem;color:var(--text-2);font-weight:500">Timestamps (${t.segments.length} segments)</summary>
+        <div style="margin-top:8px;max-height:250px;overflow-y:auto">`;
+        t.segments.forEach(seg => {
+            const startMin = Math.floor(seg.start / 60);
+            const startSec = (seg.start % 60).toFixed(1);
+            html += `<div style="display:flex;gap:10px;padding:4px 0;border-bottom:1px solid var(--border);font-size:0.85rem">
+                <span style="color:var(--accent);font-family:monospace;min-width:60px">${startMin}:${startSec.padStart(4,'0')}</span>
+                <span>${escHtml(seg.text)}</span>
+            </div>`;
+        });
+        html += '</div></details>';
+    }
+
+    display.innerHTML = html;
+}
+
+function escHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
 }
 
 // Breakdown
