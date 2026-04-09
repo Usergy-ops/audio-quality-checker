@@ -1145,9 +1145,6 @@ async function startBatchAnalysis() {
     if (!batchFiles.length) return;
 
     const profile = document.getElementById('profile-select').value;
-    const formData = new FormData();
-    batchFiles.forEach(f => formData.append('files', f));
-    formData.append('profile', profile);
 
     // Show progress
     document.getElementById('batch-upload-zone').classList.add('hidden');
@@ -1157,51 +1154,76 @@ async function startBatchAnalysis() {
     document.getElementById('profile-selector').classList.add('hidden');
     progressSection.classList.remove('hidden');
     progressFilename.textContent = `Batch: ${batchFiles.length} files`;
-    progressPercent.textContent = '';
+    progressPercent.textContent = '0%';
     progressFill.style.width = '0%';
-    progressStatus.innerHTML = '<span class="spinner"></span>Uploading files...';
+    progressStatus.innerHTML = '<span class="spinner"></span>Starting analysis...';
 
-    try {
-        const xhr = new XMLHttpRequest();
-        xhr.upload.addEventListener('progress', e => {
-            if (!e.lengthComputable) return;
-            const pct = Math.round((e.loaded / e.total) * 100);
-            progressPercent.textContent = pct + '%';
-            progressFill.style.width = pct + '%';
-            if (pct === 100) {
-                progressStatus.innerHTML = '<span class="spinner"></span>Analyzing files... This may take a few minutes.';
-                stageStart = Date.now();
-                stageInterval = setInterval(() => {
-                    const elapsed = Math.round((Date.now() - stageStart) / 1000);
-                    progressStatus.innerHTML = `<span class="spinner"></span>Analyzing files... ${elapsed}s`;
-                }, 1000);
-            }
-        });
+    const results = [];
+    const summary = { total: batchFiles.length, success: 0, failed: 0, avg_score: 0, files: [], processing_time_seconds: 0 };
+    const batchStart = Date.now();
 
-        const result = await new Promise((resolve, reject) => {
-            xhr.addEventListener('load', () => {
-                stopStages();
-                if (xhr.status === 200) {
-                    resolve(JSON.parse(xhr.responseText));
-                } else {
-                    try { reject(JSON.parse(xhr.responseText).detail); }
-                    catch { reject(`Server error (${xhr.status})`); }
-                }
+    for (let i = 0; i < batchFiles.length; i++) {
+        const f = batchFiles[i];
+        const pct = Math.round((i / batchFiles.length) * 100);
+        progressPercent.textContent = pct + '%';
+        progressFill.style.width = pct + '%';
+        progressStatus.innerHTML = `<span class="spinner"></span>Analyzing file ${i + 1}/${batchFiles.length}: ${f.name}`;
+
+        try {
+            const formData = new FormData();
+            formData.append('file', f);
+            formData.append('profile', profile);
+
+            const response = await fetch(`${API_BASE}/api/analyze`, {
+                method: 'POST',
+                body: formData,
             });
-            xhr.addEventListener('error', () => reject('Network error'));
-            xhr.addEventListener('timeout', () => reject('Batch analysis timed out'));
-            xhr.open('POST', `${API_BASE}/api/analyze-batch`);
-            xhr.timeout = 600000;
-            xhr.send(formData);
-        });
 
-        batchResult = result;
-        showBatchResults(result);
+            if (!response.ok) {
+                let detail = `Server error (${response.status})`;
+                try { detail = (await response.json()).detail || detail; } catch {}
+                results.push({ filename: f.name, success: false, error: detail });
+                summary.failed++;
+                continue;
+            }
 
-    } catch (err) {
-        stopStages();
-        showError(typeof err === 'string' ? err : 'Batch analysis failed');
+            const result = await response.json();
+            if (result.success) {
+                const fileSummary = {
+                    filename: f.name,
+                    success: true,
+                    score: result.quality ? result.quality.score : null,
+                    grade: result.quality ? result.quality.grade : null,
+                    duration: result.file_info ? result.file_info.duration_formatted : null,
+                    language: result.ai_analysis && result.ai_analysis.language ? result.ai_analysis.language.name : null,
+                    mos: result.ai_analysis && result.ai_analysis.speech_quality ? result.ai_analysis.speech_quality.mos : null,
+                    compliance: result.compliance ? result.compliance.overall : null,
+                    time: result.processing_time_seconds,
+                };
+                summary.files.push(fileSummary);
+                summary.success++;
+                result.visualizations = null;
+                results.push(result);
+            } else {
+                results.push({ filename: f.name, success: false, error: (result.errors || []).join(', ') || 'Analysis failed' });
+                summary.failed++;
+            }
+        } catch (err) {
+            results.push({ filename: f.name, success: false, error: err.message || 'Network error' });
+            summary.failed++;
+        }
     }
+
+    // Final summary
+    const scores = summary.files.filter(f => f.score != null).map(f => f.score);
+    summary.avg_score = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length * 10) / 10 : 0;
+    summary.processing_time_seconds = Math.round((Date.now() - batchStart) / 100) / 10;
+
+    progressPercent.textContent = '100%';
+    progressFill.style.width = '100%';
+
+    batchResult = { summary, results };
+    showBatchResults(batchResult);
 }
 
 function showBatchResults(data) {

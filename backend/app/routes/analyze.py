@@ -18,7 +18,7 @@ from app.analyzers.pipeline import run_analysis_pipeline
 router = APIRouter()
 
 # Dedicated thread pool for analysis (prevents exhausting default pool)
-_analysis_pool = ThreadPoolExecutor(max_workers=2, thread_name_prefix="analysis")
+_analysis_pool = ThreadPoolExecutor(max_workers=4, thread_name_prefix="analysis")
 
 # Server-side analysis timeout (seconds)
 ANALYSIS_TIMEOUT = 600  # 10 minutes — large files on CPU need time
@@ -110,7 +110,7 @@ async def analyze_batch(
     key_info: dict = Depends(optional_api_key),
 ):
     """
-    Analyze multiple audio files. Returns a summary + individual results.
+    Analyze multiple audio files in parallel. Returns a summary + individual results.
     Max 20 files per batch.
     """
     if len(files) > 20:
@@ -119,40 +119,78 @@ async def analyze_batch(
         raise HTTPException(status_code=400, detail="No files provided.")
 
     start_time = time.time()
-    results = []
-    summary = {"total": len(files), "success": 0, "failed": 0, "avg_score": 0, "files": []}
+    loop = asyncio.get_event_loop()
 
+    # Pre-read all files and save to temp
+    file_jobs = []  # list of (filename, temp_path, file_size) or (filename, None, error)
     for f in files:
-        file_start = time.time()
-        temp_path = None
         try:
             content = await f.read()
             file_size = len(content)
             is_valid, error_msg = validate_file(f.filename or "unknown", file_size)
             if not is_valid:
-                results.append({"filename": f.filename, "success": False, "error": error_msg})
-                summary["failed"] += 1
-                continue
+                file_jobs.append((f.filename, None, file_size, error_msg))
+            else:
+                temp_path = save_temp_file(content, f.filename or "upload.wav")
+                del content
+                file_jobs.append((f.filename, temp_path, file_size, None))
+        except Exception as e:
+            file_jobs.append((f.filename, None, 0, str(e)[:200]))
 
-            temp_path = save_temp_file(content, f.filename or "upload.wav")
-            del content
+    # Launch all valid files in parallel (max 2 concurrent to avoid OOM)
+    _batch_sem = asyncio.Semaphore(2)
 
-            loop = asyncio.get_event_loop()
-            result = await asyncio.wait_for(
-                loop.run_in_executor(
-                    _analysis_pool,
-                    lambda p=temp_path, fn=f.filename, fs=file_size: run_analysis_pipeline(
-                        filepath=p, original_filename=fn or "unknown",
-                        file_size=fs, profile_name=profile,
-                    )
-                ),
-                timeout=ANALYSIS_TIMEOUT,
-            )
-            result.processing_time_seconds = round(time.time() - file_start, 2)
+    async def analyze_one(filename, temp_path, file_size):
+        async with _batch_sem:
+            file_start = time.time()
+            try:
+                result = await asyncio.wait_for(
+                    loop.run_in_executor(
+                        _analysis_pool,
+                        lambda p=temp_path, fn=filename, fs=file_size: run_analysis_pipeline(
+                            filepath=p, original_filename=fn or "unknown",
+                            file_size=fs, profile_name=profile,
+                        )
+                    ),
+                    timeout=ANALYSIS_TIMEOUT,
+                )
+                result.processing_time_seconds = round(time.time() - file_start, 2)
+                result.visualizations = None  # Strip visualizations from batch
+                return {"filename": filename, "success": True, "result": result}
+            except asyncio.TimeoutError:
+                return {"filename": filename, "success": False, "error": "Analysis timed out"}
+            except Exception as e:
+                return {"filename": filename, "success": False, "error": str(e)[:200]}
+            finally:
+                if temp_path:
+                    cleanup_temp_file(temp_path)
+                    cleanup_temp_file(temp_path.with_suffix(".converted.wav"))
 
+    # Run all in parallel
+    tasks = []
+    error_results = []
+    for filename, temp_path, file_size, error in file_jobs:
+        if error:
+            error_results.append({"filename": filename, "success": False, "error": error})
+        else:
+            tasks.append(analyze_one(filename, temp_path, file_size))
+
+    parallel_results = await asyncio.gather(*tasks) if tasks else []
+
+    # Build response
+    results = []
+    summary = {"total": len(files), "success": 0, "failed": 0, "avg_score": 0, "files": []}
+
+    for er in error_results:
+        results.append(er)
+        summary["failed"] += 1
+
+    for pr in parallel_results:
+        if pr["success"]:
+            result = pr["result"]
             file_summary = {
-                "filename": f.filename,
-                "success": result.success,
+                "filename": pr["filename"],
+                "success": True,
                 "score": result.quality.score if result.quality else None,
                 "grade": result.quality.grade if result.quality else None,
                 "duration": result.file_info.duration_formatted if result.file_info else None,
@@ -163,23 +201,11 @@ async def analyze_batch(
             }
             summary["files"].append(file_summary)
             summary["success"] += 1
-
-            # Strip visualizations from batch results to reduce response size
-            result.visualizations = None
             results.append(result.model_dump())
-
-        except asyncio.TimeoutError:
-            results.append({"filename": f.filename, "success": False, "error": "Analysis timed out"})
+        else:
+            results.append({"filename": pr["filename"], "success": False, "error": pr["error"]})
             summary["failed"] += 1
-        except Exception as e:
-            results.append({"filename": f.filename, "success": False, "error": str(e)[:200]})
-            summary["failed"] += 1
-        finally:
-            if temp_path:
-                cleanup_temp_file(temp_path)
-                cleanup_temp_file(temp_path.with_suffix(".converted.wav"))
 
-    # Calculate averages
     scores = [f["score"] for f in summary["files"] if f.get("score") is not None]
     summary["avg_score"] = round(sum(scores) / len(scores), 1) if scores else 0
     summary["processing_time_seconds"] = round(time.time() - start_time, 2)

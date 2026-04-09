@@ -22,7 +22,7 @@ from app.analyzers.noise import analyze_noise_types
 from app.analyzers.transcription import transcribe_preview
 from app.analyzers.reverb import analyze_reverb
 from app.analyzers.emotion import analyze_emotion
-from app.utils.audio import convert_to_wav
+from app.utils.audio import convert_to_wav, smart_sample
 from app.utils.scoring import calculate_quality_score, calculate_compliance
 from app.utils.visualizations import generate_all_visualizations
 
@@ -68,6 +68,10 @@ def run_analysis_pipeline(
         signal_result = analyze_signal(wav_path)
         audio_data = signal_result.pop("audio_data")
         sr = signal_result.pop("sr")
+
+        # Smart sample: cap audio at 60s for AI analyzers (signal already done on full)
+        sampled_audio, original_duration = smart_sample(audio_data, sr, max_seconds=60)
+
         # Remove extra keys not needed downstream
         signal_result.pop("sample_rate", None)
         signal_result.pop("num_samples", None)
@@ -133,14 +137,14 @@ def run_analysis_pipeline(
     ai_tasks = {}
     with ThreadPoolExecutor(max_workers=4, thread_name_prefix="ai") as ai_pool:
         if audio_data is not None:
-            ai_tasks['language'] = ai_pool.submit(detect_language, audio_data=audio_data, sample_rate=sr)
-            ai_tasks['vad'] = ai_pool.submit(detect_speech_activity, audio_data=audio_data, sample_rate=sr)
-            ai_tasks['speakers'] = ai_pool.submit(count_speakers, audio_data=audio_data, sample_rate=sr)
-            ai_tasks['nisqa'] = ai_pool.submit(assess_speech_quality, audio_data=audio_data, sample_rate=sr)
-            ai_tasks['noise'] = ai_pool.submit(analyze_noise_types, audio=audio_data, sr=sr)
-            ai_tasks['transcription'] = ai_pool.submit(transcribe_preview, audio_data=audio_data, sample_rate=sr)
-            ai_tasks['reverb'] = ai_pool.submit(analyze_reverb, audio=audio_data, sr=sr)
-            ai_tasks['emotion'] = ai_pool.submit(analyze_emotion, audio=audio_data, sr=sr)
+            ai_tasks['language'] = ai_pool.submit(detect_language, audio_data=sampled_audio, sample_rate=sr)
+            ai_tasks['vad'] = ai_pool.submit(detect_speech_activity, audio_data=sampled_audio, sample_rate=sr)
+            ai_tasks['speakers'] = ai_pool.submit(count_speakers, audio_data=sampled_audio, sample_rate=sr)
+            ai_tasks['nisqa'] = ai_pool.submit(assess_speech_quality, audio_data=sampled_audio, sample_rate=sr)
+            ai_tasks['noise'] = ai_pool.submit(analyze_noise_types, audio=sampled_audio, sr=sr)
+            ai_tasks['transcription'] = ai_pool.submit(transcribe_preview, audio_data=sampled_audio, sample_rate=sr)
+            ai_tasks['reverb'] = ai_pool.submit(analyze_reverb, audio=sampled_audio, sr=sr)
+            ai_tasks['emotion'] = ai_pool.submit(analyze_emotion, audio=sampled_audio, sr=sr)
         else:
             ai_tasks['language'] = ai_pool.submit(detect_language, filepath=wav_path)
             ai_tasks['vad'] = ai_pool.submit(detect_speech_activity, filepath=wav_path)

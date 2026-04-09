@@ -124,6 +124,28 @@ def get_ffprobe_info(filepath: Path) -> dict:
         return {}
 
 
+def smart_sample(audio_data, sr: int, max_seconds: int = 60):
+    """Return a representative sample of audio capped at max_seconds.
+    For audio longer than max_seconds, take first/middle/last thirds.
+    Returns (sampled_audio, original_duration_seconds).
+    """
+    import numpy as np
+    total_samples = len(audio_data)
+    max_samples = sr * max_seconds
+    original_duration = total_samples / sr
+
+    if total_samples <= max_samples:
+        return audio_data, original_duration
+
+    third = max_samples // 3
+    mid_start = (total_samples - third) // 2
+    start_chunk = audio_data[:third]
+    mid_chunk = audio_data[mid_start:mid_start + third]
+    end_chunk = audio_data[-third:]
+    sampled = np.concatenate([start_chunk, mid_chunk, end_chunk])
+    return sampled, original_duration
+
+
 def format_duration(seconds: float) -> str:
     """Format seconds to HH:MM:SS.ms"""
     hours = int(seconds // 3600)
