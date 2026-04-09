@@ -11,7 +11,7 @@ from app.routes.analyze import router as analyze_router
 app = FastAPI(
     title="Audio Quality Checker",
     description="Deep audio analysis tool for the AI data industry",
-    version="1.0.0",
+    version="2.0.0",
 )
 
 # CORS - allow all origins for development
