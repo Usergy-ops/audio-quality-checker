@@ -7,11 +7,12 @@ import traceback
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
 
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends
 
 from app.config import MAX_FILE_SIZE_BYTES
 from app.models.schemas import AnalysisResponse, ErrorResponse
 from app.utils.audio import validate_file, save_temp_file, cleanup_temp_file, save_upload
+from app.utils.api_auth import optional_api_key
 from app.analyzers.pipeline import run_analysis_pipeline
 
 router = APIRouter()
@@ -28,6 +29,7 @@ async def analyze_audio(
     file: UploadFile = File(...),
     retain: bool = Form(True),
     profile: str = Form("default"),
+    key_info: dict = Depends(optional_api_key),
 ):
     """
     Upload an audio file and get a detailed quality analysis report.
@@ -105,6 +107,7 @@ async def analyze_audio(
 async def analyze_batch(
     files: list[UploadFile] = File(...),
     profile: str = Form("default"),
+    key_info: dict = Depends(optional_api_key),
 ):
     """
     Analyze multiple audio files. Returns a summary + individual results.

@@ -63,6 +63,28 @@ async def list_profiles():
     from app.utils.profiles import get_profile_names
     return get_profile_names()
 
+
+@app.post("/api/keys/generate")
+async def generate_key(name: str = "default", tier: str = "free"):
+    """Generate a new API key. Admin-only (no auth for now, restrict later)."""
+    from app.utils.api_auth import generate_api_key
+    if tier not in ("free", "pro", "unlimited"):
+        from fastapi import HTTPException
+        raise HTTPException(400, "Tier must be: free, pro, or unlimited")
+    return generate_api_key(name, tier)
+
+
+@app.get("/api/keys/info")
+async def key_info(api_key: str = ""):
+    """Check API key status."""
+    from app.utils.api_auth import validate_api_key
+    if not api_key:
+        return {"error": "Provide ?api_key=..."}
+    info = validate_api_key(api_key)
+    if not info:
+        return {"error": "Invalid key"}
+    return {"name": info["name"], "tier": info["tier"], "requests": info["requests"], "enabled": info["enabled"]}
+
 # Frontend static files
 FRONTEND_DIR = Path(__file__).resolve().parent.parent.parent / "frontend"
 
