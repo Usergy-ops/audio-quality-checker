@@ -22,7 +22,7 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;450;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;450;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <link rel="canonical" href="https://usergy.ai/tools/audio-quality-checker">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23111'/%3E%3Cpath d='M10 20V12M14 22V10M18 18V14M22 20V12' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
@@ -56,11 +56,11 @@
     </nav>
 
     <!-- Hero -->
-    <section class="hero">
-        <div class="container">
-            <p class="hero-tag">Free tool by UsergyAI</p>
-            <h1 class="hero-title">Understand your audio quality<br>in seconds</h1>
-            <p class="hero-sub">Upload any audio file. Get a detailed report with quality scores,<br class="hide-mobile"> signal analysis, language detection, and compliance checks.</p>
+    <section class="hero" id="hero-bg">
+        <div class="container hero-content">
+            <div class="hero-badge">Free &middot; No signup required</div>
+            <h1 class="hero-title">Know exactly what&rsquo;s in<br>your audio</h1>
+            <p class="hero-sub">Deep AI-powered analysis in seconds. Quality scores, signal metrics,<br class="hide-mobile"> noise classification, transcription, and compliance reports.</p>
 
             <!-- Mode toggle -->
             <div class="mode-toggle" id="mode-toggle">
@@ -320,44 +320,44 @@
 
     <section id="features" class="features">
         <div class="container">
-            <h2 class="section-title">What you get</h2>
-            <p class="section-sub">A full diagnostic report, powered by signal processing and neural networks.</p>
+            <h2 class="section-title">Powered by 13 analysis engines</h2>
+            <p class="section-sub">Signal processing, neural networks, and spectral analysis working in parallel.</p>
             <div class="feature-grid">
                 <div class="feature">
-                    <h3>Technical Metrics</h3>
-                    <p>Sample rate, bit depth, codec, duration, channels, and file format.</p>
+                    <h3>📊 Quality Score</h3>
+                    <p>Weighted 0-100 score across 9 components, graded A+ through F.</p>
                 </div>
                 <div class="feature">
-                    <h3>Signal Quality</h3>
-                    <p>Peak amplitude, RMS level, dynamic range, SNR, DC offset, and clipping.</p>
+                    <h3>🎤 NISQA MOS</h3>
+                    <p>Industry-standard Mean Opinion Score (1-5) with noisiness, coloration, discontinuity, and loudness sub-scores.</p>
                 </div>
                 <div class="feature">
-                    <h3>Silence Detection</h3>
-                    <p>Silent regions, silence percentage, and longest silent stretch.</p>
+                    <h3>📝 Transcription</h3>
+                    <p>First 30 seconds transcribed with timestamped segments and word count.</p>
                 </div>
                 <div class="feature">
-                    <h3>Language Detection</h3>
-                    <p>99 languages with confidence scores. Powered by neural speech models.</p>
+                    <h3>🔊 Noise Classification</h3>
+                    <p>Identifies hum, broadband, impulse, tonal, and rumble noise with spectral profiles.</p>
                 </div>
                 <div class="feature">
-                    <h3>Speech Activity</h3>
-                    <p>Detects speech vs. noise regions with precise timestamps.</p>
+                    <h3>🏛️ Reverb &amp; Echo</h3>
+                    <p>RT60 estimation, C50 clarity index, echo detection, and environment classification.</p>
                 </div>
                 <div class="feature">
-                    <h3>Speaker Count</h3>
-                    <p>Identifies how many speakers are present and when each one talks.</p>
+                    <h3>🎥 Emotion &amp; Tone</h3>
+                    <p>Prosody-based tone analysis with valence-arousal dimensions and visual mapping.</p>
                 </div>
                 <div class="feature">
-                    <h3>Quality Score</h3>
-                    <p>Weighted 0&ndash;100 score across 9 components, graded A+ through F.</p>
+                    <h3>🌐 Language Detection</h3>
+                    <p>99 languages with confidence scores. Powered by Whisper neural models.</p>
                 </div>
                 <div class="feature">
-                    <h3>Compliance Check</h3>
-                    <p>Pass / warn / fail against common AI data project specifications.</p>
+                    <h3>📡 Signal Analysis</h3>
+                    <p>SNR, peak amplitude, RMS, dynamic range, clipping, silence, and DC offset.</p>
                 </div>
                 <div class="feature">
-                    <h3>Visualizations</h3>
-                    <p>Waveform, spectrogram, loudness chart, and speaker timeline.</p>
+                    <h3>✅ Compliance Profiles</h3>
+                    <p>Test against Defined.ai, Appen, Common Voice, Telephony, and Broadcast specs.</p>
                 </div>
             </div>
         </div>
@@ -377,7 +377,7 @@
                 <div class="step">
                     <span class="step-num">2</span>
                     <h3>Analyze</h3>
-                    <p>Six analyzers run in parallel: metadata, signal, clipping, silence, language, speech.</p>
+                    <p>13 analyzers run in parallel: signal, NISQA MOS, noise, reverb, emotion, transcription, and more.</p>
                 </div>
                 <div class="step-line"></div>
                 <div class="step">
@@ -410,6 +410,28 @@
     <!-- Tooltip -->
     <div id="tip"></div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.clouds.min.js"></script>
     <script src="app.js"></script>
+    <script>
+        // Initialize Vanta Clouds on hero section
+        if (typeof VANTA !== 'undefined') {
+            VANTA.CLOUDS({
+                el: ".hero",
+                mouseControls: true,
+                touchControls: true,
+                gyroControls: false,
+                minHeight: 200.00,
+                minWidth: 200.00,
+                speed: 0.40,
+                skyColor: 0x0a1628,
+                cloudColor: 0x1a3a5c,
+                cloudShadowColor: 0x0d1f33,
+                sunColor: 0x1a6b5a,
+                sunGlareColor: 0x0d3d33,
+                sunlightColor: 0x14473d,
+            });
+        }
+    </script>
 </body>
 </html>
