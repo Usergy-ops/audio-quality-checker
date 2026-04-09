@@ -66,6 +66,7 @@
             <div class="mode-toggle" id="mode-toggle">
                 <button class="mode-btn active" data-mode="single">Single File</button>
                 <button class="mode-btn" data-mode="batch">Batch Analysis</button>
+                <button class="mode-btn" data-mode="compare">Compare</button>
             </div>
 
             <!-- Upload -->
@@ -98,6 +99,28 @@
 
             <!-- Batch file list -->
             <div id="batch-file-list" class="batch-file-list hidden"></div>
+
+            <!-- Compare Upload -->
+            <div id="compare-zone" class="compare-zone hidden">
+                <div class="compare-upload-pair">
+                    <div class="compare-upload-box" id="compare-box-a">
+                        <div class="upload-inner">
+                            <p class="upload-main">File A: <span class="upload-browse" id="compare-browse-a">Choose file</span></p>
+                            <p class="upload-hint" id="compare-name-a">No file selected</p>
+                        </div>
+                        <input type="file" id="compare-input-a" accept=".wav,.mp3,.flac,.ogg,.aac,.m4a,.aiff,.aif,.opus,.webm,.wma,.amr" hidden>
+                    </div>
+                    <div class="compare-vs">VS</div>
+                    <div class="compare-upload-box" id="compare-box-b">
+                        <div class="upload-inner">
+                            <p class="upload-main">File B: <span class="upload-browse" id="compare-browse-b">Choose file</span></p>
+                            <p class="upload-hint" id="compare-name-b">No file selected</p>
+                        </div>
+                        <input type="file" id="compare-input-b" accept=".wav,.mp3,.flac,.ogg,.aac,.m4a,.aiff,.aif,.opus,.webm,.wma,.amr" hidden>
+                    </div>
+                </div>
+                <button class="btn btn--solid" style="margin-top:16px;width:100%" id="btn-compare-start" disabled>Compare Files</button>
+            </div>
 
             <!-- Retain opt-in -->
             <label class="retain" id="retain-label">
@@ -280,6 +303,16 @@
     </section>
 
     <!-- Features -->
+    <!-- Compare Results -->
+    <section id="compare-results-section" class="results hidden">
+        <div class="container">
+            <div id="compare-results" class="card card-wide"></div>
+            <div class="actions" style="margin-top:20px">
+                <button id="btn-compare-new" class="btn btn--solid">New Comparison</button>
+            </div>
+        </div>
+    </section>
+
     <section id="features" class="features">
         <div class="container">
             <h2 class="section-title">What you get</h2>

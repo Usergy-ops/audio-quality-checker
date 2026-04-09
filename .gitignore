@@ -11,3 +11,4 @@ dist/
 build/
 .pytest_cache/
 node_modules/
+backend/api_keys.json

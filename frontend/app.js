@@ -995,6 +995,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupReveal();
     setupModeToggle();
     setupBatch();
+    setupCompare();
 
     // Profile selector
     const sel = document.getElementById('profile-select');
@@ -1022,14 +1023,19 @@ function setupModeToggle() {
             const singleZone = document.getElementById('upload-zone');
             const batchZone = document.getElementById('batch-upload-zone');
             const batchList = document.getElementById('batch-file-list');
+            const compareZone = document.getElementById('compare-zone');
 
-            if (currentMode === 'batch') {
-                singleZone.classList.add('hidden');
-                batchZone.classList.remove('hidden');
-            } else {
+            singleZone.classList.add('hidden');
+            batchZone.classList.add('hidden');
+            batchList.classList.add('hidden');
+            compareZone.classList.add('hidden');
+
+            if (currentMode === 'single') {
                 singleZone.classList.remove('hidden');
-                batchZone.classList.add('hidden');
-                batchList.classList.add('hidden');
+            } else if (currentMode === 'batch') {
+                batchZone.classList.remove('hidden');
+            } else if (currentMode === 'compare') {
+                compareZone.classList.remove('hidden');
             }
         });
     });
@@ -1233,4 +1239,207 @@ function resetBatch() {
     progressSection.classList.add('hidden');
     batchFiles = [];
     batchResult = null;
+}
+
+
+// ── Compare Mode ───────────────────────────────────────
+
+let compareFileA = null;
+let compareFileB = null;
+
+function setupCompare() {
+    const boxA = document.getElementById('compare-box-a');
+    const boxB = document.getElementById('compare-box-b');
+    const inputA = document.getElementById('compare-input-a');
+    const inputB = document.getElementById('compare-input-b');
+    const startBtn = document.getElementById('btn-compare-start');
+
+    boxA.addEventListener('click', () => inputA.click());
+    boxB.addEventListener('click', () => inputB.click());
+
+    inputA.addEventListener('change', () => {
+        if (inputA.files.length) {
+            compareFileA = inputA.files[0];
+            document.getElementById('compare-name-a').textContent = `${compareFileA.name} (${fmtSize(compareFileA.size)})`;
+            boxA.classList.add('has-file');
+            updateCompareButton();
+        }
+    });
+
+    inputB.addEventListener('change', () => {
+        if (inputB.files.length) {
+            compareFileB = inputB.files[0];
+            document.getElementById('compare-name-b').textContent = `${compareFileB.name} (${fmtSize(compareFileB.size)})`;
+            boxB.classList.add('has-file');
+            updateCompareButton();
+        }
+    });
+
+    startBtn.addEventListener('click', startCompare);
+    document.getElementById('btn-compare-new').addEventListener('click', resetCompare);
+}
+
+function updateCompareButton() {
+    const btn = document.getElementById('btn-compare-start');
+    btn.disabled = !(compareFileA && compareFileB);
+}
+
+async function startCompare() {
+    if (!compareFileA || !compareFileB) return;
+
+    const profile = document.getElementById('profile-select').value;
+
+    // Hide UI, show progress
+    document.getElementById('compare-zone').classList.add('hidden');
+    document.getElementById('mode-toggle').classList.add('hidden');
+    retainLabel.classList.add('hidden');
+    document.getElementById('profile-selector').classList.add('hidden');
+    progressSection.classList.remove('hidden');
+    progressFilename.textContent = 'Comparing 2 files...';
+    progressPercent.textContent = '';
+    progressFill.style.width = '0%';
+    progressStatus.innerHTML = '<span class="spinner"></span>Analyzing File A...';
+
+    try {
+        // Analyze both files sequentially (to show progress)
+        const resultA = await analyzeForCompare(compareFileA, profile, 'A');
+        progressStatus.innerHTML = '<span class="spinner"></span>Analyzing File B...';
+        progressFill.style.width = '50%';
+        const resultB = await analyzeForCompare(compareFileB, profile, 'B');
+
+        showCompareResults(resultA, resultB);
+    } catch (err) {
+        showError(typeof err === 'string' ? err : 'Comparison failed');
+    }
+}
+
+function analyzeForCompare(file, profile, label) {
+    return new Promise((resolve, reject) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('retain', 'false');
+        formData.append('profile', profile);
+
+        const xhr = new XMLHttpRequest();
+        xhr.addEventListener('load', () => {
+            if (xhr.status === 200) {
+                try { resolve(JSON.parse(xhr.responseText)); }
+                catch { reject(`Invalid response for File ${label}`); }
+            } else {
+                reject(`File ${label} analysis failed (${xhr.status})`);
+            }
+        });
+        xhr.addEventListener('error', () => reject(`Network error analyzing File ${label}`));
+        xhr.addEventListener('timeout', () => reject(`File ${label} timed out`));
+        xhr.open('POST', `${API_BASE}/api/analyze`);
+        xhr.timeout = 600000;
+        xhr.send(formData);
+    });
+}
+
+function showCompareResults(a, b) {
+    progressSection.classList.add('hidden');
+    const section = document.getElementById('compare-results-section');
+    section.classList.remove('hidden');
+
+    const fiA = a.file_info || {};
+    const fiB = b.file_info || {};
+    const sigA = a.signal_analysis || {};
+    const sigB = b.signal_analysis || {};
+    const qA = a.quality || {};
+    const qB = b.quality || {};
+    const aiA = a.ai_analysis || {};
+    const aiB = b.ai_analysis || {};
+    const compA = a.compliance || {};
+    const compB = b.compliance || {};
+
+    function cmp(valA, valB, higher_better = true) {
+        if (valA == null || valB == null) return ['', ''];
+        const a_better = higher_better ? valA > valB : valA < valB;
+        const b_better = higher_better ? valB > valA : valB < valA;
+        const clsA = a_better ? 'compare-better' : (b_better ? 'compare-worse' : '');
+        const clsB = b_better ? 'compare-better' : (a_better ? 'compare-worse' : '');
+        return [clsA, clsB];
+    }
+
+    function row(label, valA, valB, higher_better = true) {
+        const [clsA, clsB] = (typeof valA === 'number' && typeof valB === 'number')
+            ? cmp(valA, valB, higher_better) : ['', ''];
+        const fmtA = typeof valA === 'number' ? (Number.isInteger(valA) ? valA : valA.toFixed(1)) : (valA || '-');
+        const fmtB = typeof valB === 'number' ? (Number.isInteger(valB) ? valB : valB.toFixed(1)) : (valB || '-');
+        return `<tr><td>${label}</td><td class="${clsA}">${fmtA}</td><td class="${clsB}">${fmtB}</td></tr>`;
+    }
+
+    const scoreA = qA.score || 0;
+    const scoreB = qB.score || 0;
+    const [scA, scB] = cmp(scoreA, scoreB);
+
+    let html = `<h3 class="card-heading">Side-by-Side Comparison</h3>
+    <table class="compare-table">
+    <thead><tr><th>Metric</th><th class="${scA}">File A: ${(fiA.filename || 'A').substring(0, 25)}<br><span style="font-size:1.5rem">${scoreA}</span>/100 (${qA.grade || '-'})</th><th class="${scB}">File B: ${(fiB.filename || 'B').substring(0, 25)}<br><span style="font-size:1.5rem">${scoreB}</span>/100 (${qB.grade || '-'})</th></tr></thead><tbody>`;
+
+    // File info
+    html += row('Duration', fiA.duration_formatted, fiB.duration_formatted);
+    html += row('Format', `${fiA.format || '-'} / ${fiA.codec || '-'}`, `${fiB.format || '-'} / ${fiB.codec || '-'}`);
+    html += row('Sample Rate', fiA.sample_rate, fiB.sample_rate, true);
+    html += row('Bit Depth', fiA.bit_depth, fiB.bit_depth, true);
+    html += row('Channels', fiA.channels, fiB.channels);
+
+    // Signal
+    html += row('SNR (dB)', sigA.snr_db, sigB.snr_db, true);
+    html += row('Peak (dB)', sigA.peak_amplitude_db, sigB.peak_amplitude_db);
+    html += row('RMS (dB)', sigA.rms_level_db, sigB.rms_level_db);
+    html += row('Clipping %', sigA.clipping?.percentage, sigB.clipping?.percentage, false);
+    html += row('Silence %', sigA.silence?.percentage, sigB.silence?.percentage, false);
+
+    // AI
+    const mosA = aiA.speech_quality?.mos;
+    const mosB = aiB.speech_quality?.mos;
+    html += row('MOS Score', mosA, mosB, true);
+    html += row('Speech %', aiA.speech_activity?.speech_percentage, aiB.speech_activity?.speech_percentage, true);
+    html += row('Speakers', aiA.speakers?.count, aiB.speakers?.count);
+    html += row('Language', aiA.language?.name, aiB.language?.name);
+
+    // Noise
+    html += row('Noise Type', aiA.noise_classification?.primary_label, aiB.noise_classification?.primary_label);
+
+    // Reverb
+    html += row('RT60 (s)', aiA.reverb?.rt60_seconds, aiB.reverb?.rt60_seconds, false);
+    html += row('Environment', aiA.reverb?.environment, aiB.reverb?.environment);
+
+    // Compliance
+    const compIconA = compA.overall === 'pass' ? '\u2705' : compA.overall === 'warn' ? '\u26A0\uFE0F' : '\u274C';
+    const compIconB = compB.overall === 'pass' ? '\u2705' : compB.overall === 'warn' ? '\u26A0\uFE0F' : '\u274C';
+    html += row('Compliance', `${compIconA} ${compA.overall || '-'}`, `${compIconB} ${compB.overall || '-'}`);
+
+    html += '</tbody></table>';
+
+    // Winner
+    if (scoreA !== scoreB) {
+        const winner = scoreA > scoreB ? 'A' : 'B';
+        const diff = Math.abs(scoreA - scoreB);
+        html += `<div style="text-align:center;margin-top:16px;padding:12px;background:var(--bg-2);border-radius:10px">
+            <span style="font-size:1.2rem;font-weight:600">\ud83c\udfc6 File ${winner} wins by ${diff} points</span>
+        </div>`;
+    }
+
+    document.getElementById('compare-results').innerHTML = html;
+}
+
+function resetCompare() {
+    document.getElementById('compare-results-section').classList.add('hidden');
+    document.getElementById('compare-zone').classList.remove('hidden');
+    document.getElementById('mode-toggle').classList.remove('hidden');
+    retainLabel.classList.remove('hidden');
+    document.getElementById('profile-selector').classList.remove('hidden');
+    progressSection.classList.add('hidden');
+    compareFileA = null;
+    compareFileB = null;
+    document.getElementById('compare-name-a').textContent = 'No file selected';
+    document.getElementById('compare-name-b').textContent = 'No file selected';
+    document.getElementById('compare-box-a').classList.remove('has-file');
+    document.getElementById('compare-box-b').classList.remove('has-file');
+    document.getElementById('compare-input-a').value = '';
+    document.getElementById('compare-input-b').value = '';
+    document.getElementById('btn-compare-start').disabled = true;
 }
