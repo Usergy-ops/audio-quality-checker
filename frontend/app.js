@@ -2,7 +2,17 @@
    All backend integration intact. New DOM structure.
 ───────────────────────────────────────────────────── */
 
-const API_BASE = window.location.origin;
+// Detect base path for when running under a subpath like /audio-checker
+const getApiBase = () => {
+    const path = window.location.pathname;
+    // If running under /audio-checker/, use that as base
+    if (path.startsWith('/audio-checker')) {
+        return window.location.origin + '/audio-checker';
+    }
+    // Default for local development (localhost:8000)
+    return window.location.origin;
+};
+const API_BASE = getApiBase();
 
 // Nav scroll effect
 const nav = document.querySelector('.nav');
