@@ -5,6 +5,8 @@ Falls back gracefully if model isn't available.
 """
 import os
 import torch
+import librosa
+import numpy as np
 from pathlib import Path
 
 from app.models.schemas import SpeakerInfo
@@ -37,7 +39,6 @@ def _get_pipeline():
         try:
             _diarization_pipeline = Pipeline.from_pretrained(
                 "pyannote/speaker-diarization-3.1",
-                use_auth_token=hf_token,
             )
             # Force CPU
             _diarization_pipeline.to(torch.device("cpu"))
@@ -49,7 +50,6 @@ def _get_pipeline():
             try:
                 _diarization_pipeline = Pipeline.from_pretrained(
                     "pyannote/speaker-diarization-community-1",
-                    use_auth_token=hf_token,
                 )
                 _diarization_pipeline.to(torch.device("cpu"))
                 _diarization_available = True
@@ -89,8 +89,19 @@ def count_speakers(filepath: Path, max_duration: float = 300) -> SpeakerInfo:
         )
     
     try:
+        # Preload audio as waveform to avoid torchcodec issues
+        waveform_np, sr = librosa.load(str(filepath), sr=16000, mono=True)
+        waveform_tensor = torch.from_numpy(waveform_np).unsqueeze(0).float()
+        audio_input = {"waveform": waveform_tensor, "sample_rate": 16000}
+        
         # Run diarization
-        diarization = pipeline(str(filepath))
+        result = pipeline(audio_input)
+        
+        # pyannote 4.x returns DiarizeOutput; 3.x returns Annotation directly
+        if hasattr(result, 'speaker_diarization'):
+            diarization = result.speaker_diarization
+        else:
+            diarization = result
         
         # Extract speakers and timeline
         speakers = set()

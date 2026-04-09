@@ -101,7 +101,7 @@
         <div class="container">
 
             <!-- Score -->
-            <div class="score-card" id="score-card">
+            <div class="score-card reveal" id="score-card">
                 <div class="score-ring-wrap">
                     <svg class="score-ring" viewBox="0 0 120 120">
                         <defs>
@@ -121,38 +121,54 @@
                 <div class="score-meta">
                     <span id="score-grade" class="score-grade">-</span>
                     <p id="score-summary" class="score-summary">Analyzing...</p>
+                    <p id="score-time" style="font-size:12px;color:var(--text-3);margin-top:6px;"></p>
                 </div>
             </div>
+
+            <!-- Summary bar -->
+            <div class="summary-bar hidden" id="summary-bar"></div>
+
+            <!-- Section nav -->
+            <nav class="section-nav hidden" id="section-nav">
+                <div class="section-nav-inner">
+                    <button class="section-nav-btn" data-target="file-info-card">File</button>
+                    <button class="section-nav-btn" data-target="signal-card">Signal</button>
+                    <button class="section-nav-btn" data-target="ai-card">AI Analysis</button>
+                    <button class="section-nav-btn" data-target="breakdown-card">Quality</button>
+                    <button class="section-nav-btn" data-target="compliance-card">Compliance</button>
+                    <button class="section-nav-btn" data-target="viz-card">Charts</button>
+                </div>
+            </nav>
 
             <!-- Cards grid -->
             <div class="cards">
 
-                <div class="card" id="file-info-card">
+                <div class="card reveal" id="file-info-card">
                     <h3 class="card-heading">File Information</h3>
                     <div id="file-info-grid" class="data-grid"></div>
                 </div>
 
-                <div class="card" id="signal-card">
+                <div class="card reveal" id="signal-card">
                     <h3 class="card-heading">Signal Analysis</h3>
                     <div id="signal-grid" class="data-grid"></div>
                 </div>
 
-                <div class="card" id="ai-card">
+                <div class="card reveal" id="ai-card">
                     <h3 class="card-heading">AI Analysis</h3>
                     <div id="ai-grid" class="data-grid"></div>
                 </div>
 
-                <div class="card card-wide" id="breakdown-card">
+                <div class="card card-wide reveal" id="breakdown-card">
                     <h3 class="card-heading">Quality Breakdown</h3>
                     <div id="breakdown-list" class="breakdown"></div>
                 </div>
 
-                <div class="card card-wide" id="compliance-card">
+                <div class="card card-wide reveal" id="compliance-card">
                     <h3 class="card-heading">Compliance</h3>
                     <div id="compliance-list" class="compliance"></div>
                 </div>
 
-                <div class="card card-wide" id="viz-card">
+                <div class="card card-wide reveal" id="viz-card">
                     <h3 class="card-heading">Visualizations</h3>
                     <div id="viz-container" class="viz-grid"></div>
                 </div>
@@ -253,6 +269,19 @@
             <p class="footer-small">Files are deleted after analysis unless you opt in to help improve our models.</p>
         </div>
     </footer>
+
+    <!-- Lightbox -->
+    <div class="lightbox" id="lightbox">
+        <button class="lightbox-close" id="lightbox-close">&times;</button>
+        <button class="lightbox-nav lightbox-prev" id="lightbox-prev">&lsaquo;</button>
+        <button class="lightbox-nav lightbox-next" id="lightbox-next">&rsaquo;</button>
+        <img class="lightbox-img" id="lightbox-img" src="" alt="">
+        <span class="lightbox-caption" id="lightbox-caption"></span>
+        <div class="lightbox-dots" id="lightbox-dots"></div>
+    </div>
+
+    <!-- Tooltip -->
+    <div id="tip"></div>
 
     <script src="app.js"></script>
 </body>
