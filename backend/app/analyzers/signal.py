@@ -8,6 +8,11 @@ import soundfile as sf
 from pathlib import Path
 
 
+# Max duration to fully load for signal analysis (seconds).
+# For longer files we load the full thing at reduced sample rate.
+SIGNAL_MAX_SECONDS = 600  # 10 minutes
+
+
 def analyze_signal(filepath: Path, sr: int = None) -> dict:
     """
     Perform core signal analysis on audio file.
@@ -20,8 +25,9 @@ def analyze_signal(filepath: Path, sr: int = None) -> dict:
         - peak_amplitude_linear
         - rms_level_linear
     """
-    # Load audio (mono, original sample rate if sr=None)
-    y, sr_actual = librosa.load(str(filepath), sr=sr, mono=True)
+    # Load audio (mono). Cap at SIGNAL_MAX_SECONDS to avoid huge memory usage.
+    y, sr_actual = librosa.load(str(filepath), sr=sr, mono=True, duration=SIGNAL_MAX_SECONDS)
+    print(f"[Signal Analysis] Loaded {len(y)/sr_actual:.1f}s at {sr_actual}Hz ({len(y)} samples)")
     
     if len(y) == 0:
         raise ValueError("Audio file is empty (no samples)")

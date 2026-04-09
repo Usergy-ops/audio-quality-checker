@@ -24,8 +24,39 @@ GRID_COLOR = '#1E293B'
 
 SPEAKER_COLORS = ['#00BFA6', '#F5A623', '#E74C3C', '#9B59B6', '#3498DB', '#2ECC71', '#E67E22', '#1ABC9C']
 
+# Max samples to plot (downsample beyond this for performance)
+# ~5 min at 22050Hz = 6.6M samples. We cap at 2M for fast plotting.
+MAX_PLOT_SAMPLES = 2_000_000
+
+
+def _downsample_for_plot(y: np.ndarray, max_samples: int = MAX_PLOT_SAMPLES) -> np.ndarray:
+    """Downsample audio array for visualization (keeps peaks via min/max pairs)."""
+    if len(y) <= max_samples:
+        return y
+    factor = len(y) // (max_samples // 2)
+    # Trim to even multiple
+    trimmed = y[:len(y) - (len(y) % factor)]
+    reshaped = trimmed.reshape(-1, factor)
+    # Keep min and max per chunk to preserve waveform shape
+    mins = reshaped.min(axis=1)
+    maxs = reshaped.max(axis=1)
+    interleaved = np.empty(mins.size + maxs.size, dtype=y.dtype)
+    interleaved[0::2] = mins
+    interleaved[1::2] = maxs
+    print(f"[Viz] Downsampled {len(y)} -> {len(interleaved)} samples for plotting")
+    return interleaved
+
 
 def _fig_to_base64(fig) -> str:
+    """Convert matplotlib figure to base64 PNG string."""
+    buf = io.BytesIO()
+    fig.savefig(buf, format='png', dpi=100, bbox_inches='tight',
+                facecolor=BG_COLOR, edgecolor='none', pad_inches=0.1)
+    plt.close(fig)
+    buf.seek(0)
+    return base64.b64encode(buf.read()).decode('utf-8')
+
+
     """Convert matplotlib figure to base64 PNG string."""
     buf = io.BytesIO()
     fig.savefig(buf, format='png', dpi=100, bbox_inches='tight',
@@ -44,11 +75,15 @@ def generate_waveform(y: np.ndarray, sr: int, speech_regions: list = None) -> st
     fig.patch.set_facecolor(BG_COLOR)
     ax.set_facecolor(BG_COLOR)
     
-    # Time axis
-    times = np.arange(len(y)) / sr
+    # Downsample for plotting performance
+    y_plot = _downsample_for_plot(y)
+    
+    # Time axis (recomputed for downsampled data)
+    duration_secs = len(y) / sr
+    times = np.linspace(0, duration_secs, len(y_plot))
     
     # Plot waveform
-    ax.plot(times, y, color=ELECTRIC_TEAL, linewidth=0.3, alpha=0.8)
+    ax.plot(times, y_plot, color=ELECTRIC_TEAL, linewidth=0.3, alpha=0.8)
     
     # Highlight speech regions if available
     if speech_regions:
@@ -79,8 +114,12 @@ def generate_spectrogram(y: np.ndarray, sr: int) -> str:
     fig.patch.set_facecolor(BG_COLOR)
     ax.set_facecolor(BG_COLOR)
     
+    # Cap audio for spectrogram (max ~5 min at 22050Hz)
+    max_spec_samples = sr * 300  # 5 min
+    y_spec = y[:max_spec_samples] if len(y) > max_spec_samples else y
+    
     # Compute mel spectrogram
-    S = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=128, fmax=sr // 2)
+    S = librosa.feature.melspectrogram(y=y_spec, sr=sr, n_mels=128, fmax=sr // 2)
     S_dB = librosa.power_to_db(S, ref=np.max)
     
     # Custom colormap (dark theme)
@@ -114,10 +153,14 @@ def generate_loudness(y: np.ndarray, sr: int) -> str:
     fig.patch.set_facecolor(BG_COLOR)
     ax.set_facecolor(BG_COLOR)
     
+    # Cap audio for loudness chart
+    max_loud_samples = sr * 300  # 5 min
+    y_loud = y[:max_loud_samples] if len(y) > max_loud_samples else y
+    
     # Compute RMS
     frame_length = int(sr * 0.05)
     hop_length = frame_length // 2
-    rms = librosa.feature.rms(y=y, frame_length=frame_length, hop_length=hop_length)[0]
+    rms = librosa.feature.rms(y=y_loud, frame_length=frame_length, hop_length=hop_length)[0]
     rms_db = 20 * np.log10(rms + 1e-10)
     times = librosa.frames_to_time(np.arange(len(rms)), sr=sr, hop_length=hop_length)
     
