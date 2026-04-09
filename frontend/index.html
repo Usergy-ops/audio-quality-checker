@@ -192,69 +192,78 @@
             <!-- Section nav -->
             <nav class="section-nav hidden" id="section-nav">
                 <div class="section-nav-inner">
-                    <button class="section-nav-btn" data-target="file-info-card">File</button>
+                    <button class="section-nav-btn" data-target="file-info-card">Overview</button>
                     <button class="section-nav-btn" data-target="signal-card">Signal</button>
-                    <button class="section-nav-btn" data-target="ai-card">AI Analysis</button>
-                    <button class="section-nav-btn" data-target="breakdown-card">Quality</button>
-                    <button class="section-nav-btn" data-target="compliance-card">Compliance</button>
+                    <button class="section-nav-btn" data-target="speech-quality-card">Quality</button>
+                    <button class="section-nav-btn" data-target="noise-card">Audio</button>
+                    <button class="section-nav-btn" data-target="ai-card">Detection</button>
+                    <button class="section-nav-btn" data-target="waveform-card">Player</button>
                     <button class="section-nav-btn" data-target="viz-card">Charts</button>
+                    <button class="section-nav-btn" data-target="compliance-card">Compliance</button>
                 </div>
             </nav>
 
             <!-- Cards grid -->
             <div class="cards">
 
+                <!-- 1. File Information -->
                 <div class="card reveal" id="file-info-card">
-                    <h3 class="card-heading">File Information</h3>
+                    <div class="card-accent accent-blue"></div>
+                    <h3 class="card-heading">File Overview</h3>
                     <div id="file-info-grid" class="data-grid"></div>
                 </div>
 
+                <!-- 2. Signal Analysis -->
                 <div class="card reveal" id="signal-card">
+                    <div class="card-accent accent-orange"></div>
                     <h3 class="card-heading">Signal Analysis</h3>
                     <div id="signal-grid" class="data-grid"></div>
                 </div>
 
-                <div class="card reveal" id="ai-card">
-                    <h3 class="card-heading">AI Analysis</h3>
-                    <div id="ai-grid" class="data-grid"></div>
-                </div>
-
+                <!-- 3. Speech Quality (MOS) -->
                 <div class="card reveal" id="speech-quality-card">
-                    <h3 class="card-heading">Speech Quality (MOS)</h3>
+                    <div class="card-accent accent-green"></div>
+                    <h3 class="card-heading">Speech Quality</h3>
                     <div id="mos-display" class="mos-display"></div>
                     <div id="mos-grid" class="data-grid"></div>
                 </div>
 
+                <!-- 4. Noise Classification -->
                 <div class="card reveal" id="noise-card">
-                    <h3 class="card-heading">Noise Classification</h3>
+                    <div class="card-accent accent-red"></div>
+                    <h3 class="card-heading">Noise Profile</h3>
                     <div id="noise-display"></div>
                 </div>
 
+                <!-- 5. Reverb & Echo -->
+                <div class="card reveal" id="reverb-card">
+                    <div class="card-accent accent-purple"></div>
+                    <h3 class="card-heading">Room Acoustics</h3>
+                    <div id="reverb-display"></div>
+                </div>
+
+                <!-- 6. Emotion & Tone -->
+                <div class="card reveal" id="emotion-card">
+                    <div class="card-accent accent-teal"></div>
+                    <h3 class="card-heading">Tone Analysis</h3>
+                    <div id="emotion-display"></div>
+                </div>
+
+                <!-- 7. AI Analysis (Language, Speech Activity, Speakers) -->
+                <div class="card reveal" id="ai-card">
+                    <div class="card-accent accent-blue"></div>
+                    <h3 class="card-heading">Speech Detection</h3>
+                    <div id="ai-grid" class="data-grid"></div>
+                </div>
+
+                <!-- 8. Transcription -->
                 <div class="card card-wide reveal" id="transcription-card">
+                    <div class="card-accent accent-purple"></div>
                     <h3 class="card-heading">Transcription Preview</h3>
                     <div id="transcription-display"></div>
                 </div>
 
-                <div class="card reveal" id="reverb-card">
-                    <h3 class="card-heading">Reverb & Echo</h3>
-                    <div id="reverb-display"></div>
-                </div>
-
-                <div class="card reveal" id="emotion-card">
-                    <h3 class="card-heading">Tone & Emotion</h3>
-                    <div id="emotion-display"></div>
-                </div>
-
-                <div class="card card-wide reveal" id="breakdown-card">
-                    <h3 class="card-heading">Quality Breakdown</h3>
-                    <div id="breakdown-list" class="breakdown"></div>
-                </div>
-
-                <div class="card card-wide reveal" id="compliance-card">
-                    <h3 class="card-heading">Compliance</h3>
-                    <div id="compliance-list" class="compliance"></div>
-                </div>
-
+                <!-- 9. Audio Player -->
                 <div class="card card-wide reveal" id="waveform-card">
                     <h3 class="card-heading">Audio Player</h3>
                     <div id="waveform-player">
@@ -279,6 +288,20 @@
                     <div id="viz-container" class="viz-grid"></div>
                 </div>
 
+                <!-- 12. Quality Breakdown -->
+                <div class="card card-wide reveal" id="breakdown-card">
+                    <div class="card-accent accent-green"></div>
+                    <h3 class="card-heading">Quality Breakdown</h3>
+                    <div id="breakdown-list" class="breakdown"></div>
+                </div>
+
+                <!-- 13. Compliance -->
+                <div class="card card-wide reveal" id="compliance-card">
+                    <div class="card-accent accent-orange"></div>
+                    <h3 class="card-heading">Compliance Report</h3>
+                    <div id="compliance-list" class="compliance"></div>
+                </div>
+
                 <div class="card card-wide hidden" id="errors-card">
                     <h3 class="card-heading card-heading--warn">Warnings</h3>
                     <div id="errors-list" class="errors"></div>
@@ -293,7 +316,7 @@
                 </button>
                 <button id="btn-download-pdf" class="btn btn--outline">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-                    PDF Report
+                    Download Report
                 </button>
                 <button id="btn-new-analysis" class="btn btn--solid">Analyze another file</button>
             </div>
@@ -329,39 +352,39 @@
             <p class="section-sub">Signal processing, neural networks, and spectral analysis working in parallel.</p>
             <div class="feature-grid">
                 <div class="feature">
-                    <h3>📊 Quality Score</h3>
+                    <h3>Quality Score</h3>
                     <p>Weighted 0-100 score across 9 components, graded A+ through F.</p>
                 </div>
                 <div class="feature">
-                    <h3>🎤 NISQA MOS</h3>
+                    <h3>NISQA MOS</h3>
                     <p>Industry-standard Mean Opinion Score (1-5) with noisiness, coloration, discontinuity, and loudness sub-scores.</p>
                 </div>
                 <div class="feature">
-                    <h3>📝 Transcription</h3>
+                    <h3>Transcription</h3>
                     <p>First 30 seconds transcribed with timestamped segments and word count.</p>
                 </div>
                 <div class="feature">
-                    <h3>🔊 Noise Classification</h3>
+                    <h3>Noise Classification</h3>
                     <p>Identifies hum, broadband, impulse, tonal, and rumble noise with spectral profiles.</p>
                 </div>
                 <div class="feature">
-                    <h3>🏛️ Reverb &amp; Echo</h3>
+                    <h3>Reverb &amp; Echo</h3>
                     <p>RT60 estimation, C50 clarity index, echo detection, and environment classification.</p>
                 </div>
                 <div class="feature">
-                    <h3>🎥 Emotion &amp; Tone</h3>
+                    <h3>Emotion &amp; Tone</h3>
                     <p>Prosody-based tone analysis with valence-arousal dimensions and visual mapping.</p>
                 </div>
                 <div class="feature">
-                    <h3>🌐 Language Detection</h3>
+                    <h3>Language Detection</h3>
                     <p>99 languages with confidence scores. Powered by Whisper neural models.</p>
                 </div>
                 <div class="feature">
-                    <h3>📡 Signal Analysis</h3>
+                    <h3>Signal Analysis</h3>
                     <p>SNR, peak amplitude, RMS, dynamic range, clipping, silence, and DC offset.</p>
                 </div>
                 <div class="feature">
-                    <h3>✅ Compliance Profiles</h3>
+                    <h3>Compliance Profiles</h3>
                     <p>Test against 6 industry compliance profiles for AI data, crowd platforms, telephony, and broadcast.</p>
                 </div>
             </div>
