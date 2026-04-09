@@ -32,11 +32,15 @@ def run_analysis_pipeline(
     original_filename: str,
     file_size: int,
     profile_name: str = "default",
+    mode: str = "quick",
 ) -> AnalysisResponse:
     """
     Run the complete analysis pipeline on an audio file.
     Each analyzer is called in sequence, errors in one don't stop the rest.
+    
+    mode: "quick" = fast essential metrics, "deep" = full AI analysis
     """
+    is_deep = mode == "deep"
     errors = []
     file_info = None
     signal_analysis = None
@@ -137,19 +141,25 @@ def run_analysis_pipeline(
     ai_tasks = {}
     with ThreadPoolExecutor(max_workers=4, thread_name_prefix="ai") as ai_pool:
         if audio_data is not None:
+            # Always run: language detection and VAD (fast)
             ai_tasks['language'] = ai_pool.submit(detect_language, audio_data=sampled_audio, sample_rate=sr)
             ai_tasks['vad'] = ai_pool.submit(detect_speech_activity, audio_data=sampled_audio, sample_rate=sr)
-            ai_tasks['speakers'] = ai_pool.submit(count_speakers, audio_data=sampled_audio, sample_rate=sr)
-            ai_tasks['nisqa'] = ai_pool.submit(assess_speech_quality, audio_data=sampled_audio, sample_rate=sr)
-            ai_tasks['noise'] = ai_pool.submit(analyze_noise_types, audio=sampled_audio, sr=sr)
-            ai_tasks['transcription'] = ai_pool.submit(transcribe_preview, audio_data=sampled_audio, sample_rate=sr)
-            ai_tasks['reverb'] = ai_pool.submit(analyze_reverb, audio=sampled_audio, sr=sr)
-            ai_tasks['emotion'] = ai_pool.submit(analyze_emotion, audio=sampled_audio, sr=sr)
+            
+            # Deep mode only: expensive AI analyzers
+            if is_deep:
+                ai_tasks['speakers'] = ai_pool.submit(count_speakers, audio_data=sampled_audio, sample_rate=sr)
+                ai_tasks['nisqa'] = ai_pool.submit(assess_speech_quality, audio_data=sampled_audio, sample_rate=sr)
+                ai_tasks['noise'] = ai_pool.submit(analyze_noise_types, audio=sampled_audio, sr=sr)
+                ai_tasks['transcription'] = ai_pool.submit(transcribe_preview, audio_data=sampled_audio, sample_rate=sr)
+                ai_tasks['reverb'] = ai_pool.submit(analyze_reverb, audio=sampled_audio, sr=sr)
+                ai_tasks['emotion'] = ai_pool.submit(analyze_emotion, audio=sampled_audio, sr=sr)
         else:
+            # Fallback to filepath-based analysis
             ai_tasks['language'] = ai_pool.submit(detect_language, filepath=wav_path)
             ai_tasks['vad'] = ai_pool.submit(detect_speech_activity, filepath=wav_path)
-            ai_tasks['speakers'] = ai_pool.submit(count_speakers, filepath=wav_path)
-            ai_tasks['nisqa'] = ai_pool.submit(assess_speech_quality, filepath=wav_path)
+            if is_deep:
+                ai_tasks['speakers'] = ai_pool.submit(count_speakers, filepath=wav_path)
+                ai_tasks['nisqa'] = ai_pool.submit(assess_speech_quality, filepath=wav_path)
     
     # Collect results
     for name, future in ai_tasks.items():

@@ -28,18 +28,36 @@ let uploadedFileBlob = null;
 let wavesurferInstance = null;
 let stageInterval = null;
 
-const ANALYSIS_STAGES = [
+const STAGES_QUICK = [
     'Extracting file metadata...',
     'Analyzing signal quality...',
     'Checking for clipping and silence...',
     'Calculating signal-to-noise ratio...',
     'Running language detection...',
     'Detecting speech activity...',
-    'Counting speakers...',
     'Computing quality score...',
     'Generating visualizations...',
     'Finalizing report...',
 ];
+
+const STAGES_DEEP = [
+    'Extracting file metadata...',
+    'Analyzing signal quality...',
+    'Checking for clipping and silence...',
+    'Calculating signal-to-noise ratio...',
+    'Running language detection...',
+    'Detecting speech activity...',
+    'Counting speakers (this takes time)...',
+    'Analyzing speech quality (MOS)...',
+    'Classifying noise types...',
+    'Generating transcription preview...',
+    'Analyzing reverb and room acoustics...',
+    'Detecting emotion and tone...',
+    'Computing quality score...',
+    'Generating visualizations...',
+    'Finalizing report...',
+];
+
 const WAIT_MESSAGES = [
     'Still processing — larger files take longer...',
     'Deep analysis in progress...',
@@ -49,9 +67,13 @@ const WAIT_MESSAGES = [
     'Generating detailed visualizations...',
     'Still working — quality takes time...',
 ];
-let stageStart = 0;
 
-function startStages() {
+let stageStart = 0;
+let currentAnalysisMode = 'quick';
+
+function startStages(mode = 'quick') {
+    currentAnalysisMode = mode;
+    const stages = mode === 'deep' ? STAGES_DEEP : STAGES_QUICK;
     let i = 0;
     let waitIdx = 0;
     stageStart = Date.now();
@@ -59,8 +81,8 @@ function startStages() {
     stageInterval = setInterval(() => {
         const elapsed = Math.round((Date.now() - stageStart) / 1000);
         const timer = `<span style="color:#888;font-size:0.85em;margin-left:8px">${elapsed}s</span>`;
-        if (i < ANALYSIS_STAGES.length) {
-            progressStatus.innerHTML = `<span class="spinner"></span>${ANALYSIS_STAGES[i]}${timer}`;
+        if (i < stages.length) {
+            progressStatus.innerHTML = `<span class="spinner"></span>${stages[i]}${timer}`;
             i++;
         } else {
             // Cycle through wait messages so it never looks stuck
@@ -68,7 +90,7 @@ function startStages() {
             progressStatus.innerHTML = `<span class="spinner"></span>${msg}${timer}`;
             waitIdx++;
         }
-    }, 2000);
+    }, mode === 'deep' ? 4000 : 2000);  // Slower intervals for deep mode
 }
 
 function stopStages() {
@@ -125,14 +147,18 @@ function handleFile(file) {
     uploadedFileBlob = file;
 
     const retain = document.getElementById('retain-checkbox').checked;
+    const analysisMode = document.querySelector('input[name="analysis-mode"]:checked')?.value || 'quick';
     const formData = new FormData();
     formData.append('file', file);
     formData.append('retain', retain.toString());
     formData.append('profile', document.getElementById('profile-select').value);
+    formData.append('mode', analysisMode);
 
     // Show progress
     uploadZone.classList.add('hidden');
     retainLabel.classList.add('hidden');
+    document.getElementById('analysis-mode').classList.add('hidden');
+    document.getElementById('profile-selector').classList.add('hidden');
     progressSection.classList.remove('hidden');
     progressFilename.textContent = `${file.name} (${fmtSize(file.size)})`;
     progressPercent.textContent = '0%';
@@ -148,7 +174,7 @@ function handleFile(file) {
         progressFill.style.width = pct + '%';
         if (pct === 100) {
             progressStatus.innerHTML = '<span class="spinner"></span>Analyzing...';
-            startStages();
+            startStages(analysisMode);
         }
     });
 
@@ -840,6 +866,7 @@ function reset() {
     uploadZone.classList.remove('hidden');
     retainLabel.classList.remove('hidden');
     document.getElementById('mode-toggle').classList.remove('hidden');
+    document.getElementById('analysis-mode').classList.remove('hidden');
     document.getElementById('profile-selector').classList.remove('hidden');
     fileInput.value = '';
     currentResult = null;
@@ -1032,6 +1059,8 @@ function showError(msg) {
     progressSection.classList.add('hidden');
     uploadZone.classList.remove('hidden');
     retainLabel.classList.remove('hidden');
+    document.getElementById('analysis-mode').classList.remove('hidden');
+    document.getElementById('profile-selector').classList.remove('hidden');
     alert(msg);
 }
 
@@ -1101,6 +1130,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupModeToggle();
     setupBatch();
     setupCompare();
+    setupAnalysisMode();
 
     // Profile selector
     const sel = document.getElementById('profile-select');
@@ -1111,6 +1141,22 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+function setupAnalysisMode() {
+    // Restore saved preference
+    const saved = localStorage.getItem('analysisMode');
+    if (saved) {
+        const radio = document.querySelector(`input[name="analysis-mode"][value="${saved}"]`);
+        if (radio) radio.checked = true;
+    }
+    
+    // Save preference on change
+    document.querySelectorAll('input[name="analysis-mode"]').forEach(radio => {
+        radio.addEventListener('change', () => {
+            localStorage.setItem('analysisMode', radio.value);
+        });
+    });
+}
 
 
 // ── Mode Toggle ────────────────────────────────────────
@@ -1203,6 +1249,7 @@ async function startBatchAnalysis() {
     document.getElementById('batch-file-list').classList.add('hidden');
     document.getElementById('mode-toggle').classList.add('hidden');
     retainLabel.classList.add('hidden');
+    document.getElementById('analysis-mode').classList.add('hidden');
     document.getElementById('profile-selector').classList.add('hidden');
     progressSection.classList.remove('hidden');
     progressFilename.textContent = `Batch: ${batchFiles.length} files`;
@@ -1361,6 +1408,7 @@ function resetBatch() {
     document.getElementById('batch-upload-zone').classList.remove('hidden');
     document.getElementById('mode-toggle').classList.remove('hidden');
     retainLabel.classList.remove('hidden');
+    document.getElementById('analysis-mode').classList.remove('hidden');
     document.getElementById('profile-selector').classList.remove('hidden');
     document.getElementById('batch-file-list').classList.add('hidden');
     progressSection.classList.add('hidden');
@@ -1420,6 +1468,7 @@ async function startCompare() {
     document.getElementById('compare-zone').classList.add('hidden');
     document.getElementById('mode-toggle').classList.add('hidden');
     retainLabel.classList.add('hidden');
+    document.getElementById('analysis-mode').classList.add('hidden');
     document.getElementById('profile-selector').classList.add('hidden');
     progressSection.classList.remove('hidden');
     progressFilename.textContent = 'Comparing 2 files...';
@@ -1558,6 +1607,7 @@ function resetCompare() {
     document.getElementById('compare-zone').classList.remove('hidden');
     document.getElementById('mode-toggle').classList.remove('hidden');
     retainLabel.classList.remove('hidden');
+    document.getElementById('analysis-mode').classList.remove('hidden');
     document.getElementById('profile-selector').classList.remove('hidden');
     progressSection.classList.add('hidden');
     compareFileA = null;

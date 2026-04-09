@@ -1570,3 +1570,80 @@ body {
     border-width: 2px;
     margin-right: 8px;
 }
+
+/* ── Analysis Mode Selector ───────────────────────── */
+
+.analysis-mode {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin: 20px auto 16px;
+    max-width: 560px;
+}
+
+.analysis-mode-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: rgba(0,0,0,0.5);
+}
+
+.analysis-mode-options {
+    display: flex;
+    gap: 8px;
+}
+
+.mode-option {
+    cursor: pointer;
+}
+
+.mode-option input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.mode-option-btn {
+    display: flex;
+    flex-direction: column;
+    padding: 10px 20px;
+    background: rgba(255,255,255,0.7);
+    border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 10px;
+    transition: all 0.2s;
+    min-width: 140px;
+    text-align: center;
+}
+
+.mode-option input:checked + .mode-option-btn {
+    background: rgba(255,255,255,0.95);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(0, 137, 123, 0.15);
+}
+
+.mode-option:hover .mode-option-btn {
+    background: rgba(255,255,255,0.9);
+    border-color: rgba(0,0,0,0.2);
+}
+
+.mode-option-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+.mode-option-desc {
+    font-size: 11px;
+    color: rgba(0,0,0,0.45);
+    margin-top: 2px;
+}
+
+.mode-option input:checked + .mode-option-btn .mode-option-name {
+    color: var(--accent);
+}
+
+/* Hero overrides for analysis mode */
+.hero .analysis-mode-label {
+    color: rgba(0,0,0,0.55);
+}

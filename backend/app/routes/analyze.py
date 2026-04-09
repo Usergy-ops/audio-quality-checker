@@ -29,6 +29,7 @@ async def analyze_audio(
     file: UploadFile = File(...),
     retain: bool = Form(True),
     profile: str = Form("default"),
+    mode: str = Form("quick"),
     key_info: dict = Depends(optional_api_key),
 ):
     """
@@ -38,6 +39,7 @@ async def analyze_audio(
     Maximum file size: 1 GB
     
     retain: If true, file is kept for improving the tool. Default: true.
+    mode: "quick" (fast, essential metrics) or "deep" (full AI analysis). Default: quick.
     """
     start_time = time.time()
     temp_path = None
@@ -66,6 +68,7 @@ async def analyze_audio(
                 original_filename=file.filename or "unknown",
                 file_size=file_size,
                 profile_name=profile,
+                mode=mode,
             )
         )
         try:

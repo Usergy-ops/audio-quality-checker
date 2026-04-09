@@ -129,6 +129,27 @@
                 <span class="retain-text">Help us improve &mdash; your file may be used to enhance our analysis</span>
             </label>
 
+            <!-- Analysis Mode Selector -->
+            <div class="analysis-mode" id="analysis-mode">
+                <span class="analysis-mode-label">Analysis Mode:</span>
+                <div class="analysis-mode-options">
+                    <label class="mode-option">
+                        <input type="radio" name="analysis-mode" value="quick" checked>
+                        <span class="mode-option-btn">
+                            <span class="mode-option-name">Quick</span>
+                            <span class="mode-option-desc">~30 sec &middot; Essential metrics</span>
+                        </span>
+                    </label>
+                    <label class="mode-option">
+                        <input type="radio" name="analysis-mode" value="deep">
+                        <span class="mode-option-btn">
+                            <span class="mode-option-name">Deep</span>
+                            <span class="mode-option-desc">~3 min &middot; Full AI analysis</span>
+                        </span>
+                    </label>
+                </div>
+            </div>
+
             <!-- Compliance Profile Selector -->
             <div class="profile-selector" id="profile-selector">
                 <label for="profile-select" class="profile-label">Compliance Profile:</label>
