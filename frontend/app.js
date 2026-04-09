@@ -187,6 +187,7 @@ function showResults(r) {
     safe(() => renderSignal(r.signal_analysis), 'signal');
     safe(() => renderAI(r.ai_analysis), 'ai');
     safe(() => renderMOS(r.ai_analysis), 'mos');
+    safe(() => renderNoise(r.ai_analysis), 'noise');
     safe(() => renderBreakdown(r.quality), 'breakdown');
     safe(() => renderCompliance(r.compliance), 'compliance');
     safe(() => renderViz(r.visualizations), 'viz');
@@ -402,6 +403,80 @@ function renderMOS(a) {
     `;
 }
 
+
+// Noise Classification
+
+function renderNoise(a) {
+    const card = document.getElementById('noise-card');
+    if (!a || !a.noise_classification) {
+        card.classList.add('hidden');
+        return;
+    }
+    card.classList.remove('hidden');
+    const nc = a.noise_classification;
+    const display = document.getElementById('noise-display');
+
+    // Primary noise type
+    let html = `<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+        <span style="font-size:2rem">${nc.noise_types[0]?.icon || ''}</span>
+        <div>
+            <div style="font-weight:600;font-size:1.1rem">${nc.primary_label}</div>
+            <div style="color:var(--text-3);font-size:0.85rem">${nc.noise_types[0]?.description || ''}</div>
+        </div>
+    </div>`;
+
+    // All detected noise types
+    if (nc.noise_types.length > 0) {
+        html += '<div style="margin-bottom:12px">';
+        nc.noise_types.forEach(nt => {
+            const barWidth = Math.max(nt.confidence, 5);
+            const barColor = nt.confidence >= 70 ? 'var(--accent)' : nt.confidence >= 40 ? '#F5A623' : 'var(--text-3)';
+            html += `<div style="margin-bottom:8px">
+                <div style="display:flex;justify-content:space-between;font-size:0.85rem;margin-bottom:3px">
+                    <span>${nt.icon} ${nt.label}</span>
+                    <span style="color:var(--text-3)">${nt.confidence}%</span>
+                </div>
+                <div style="height:6px;background:var(--bg-2);border-radius:3px;overflow:hidden">
+                    <div style="width:${barWidth}%;height:100%;background:${barColor};border-radius:3px;transition:width 0.5s"></div>
+                </div>
+            </div>`;
+        });
+        html += '</div>';
+    }
+
+    // Spectral profile
+    const sp = nc.spectral_profile;
+    if (sp && Object.keys(sp).length > 0) {
+        html += `<div style="font-size:0.85rem;color:var(--text-2);margin-top:12px">
+            <div style="font-weight:600;margin-bottom:6px">Frequency Band Energy</div>`;
+        const bandLabels = {
+            sub_bass: 'Sub Bass (0-60 Hz)',
+            bass: 'Bass (60-250 Hz)',
+            low_mid: 'Low Mid (250-500 Hz)',
+            mid: 'Mid (500-2k Hz)',
+            upper_mid: 'Upper Mid (2k-4k Hz)',
+            high: 'High (4k-8k Hz)',
+            ultra_high: 'Ultra High (8k+ Hz)',
+        };
+        const maxVal = Math.max(...Object.values(sp), 1);
+        for (const [key, val] of Object.entries(sp)) {
+            const pct = (val / maxVal) * 100;
+            html += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+                <span style="width:150px;flex-shrink:0;font-size:0.8rem">${bandLabels[key] || key}</span>
+                <div style="flex:1;height:5px;background:var(--bg-2);border-radius:3px;overflow:hidden">
+                    <div style="width:${pct}%;height:100%;background:var(--accent);border-radius:3px"></div>
+                </div>
+                <span style="width:40px;text-align:right;font-size:0.8rem">${val}%</span>
+            </div>`;
+        }
+        html += '</div>';
+    }
+
+    // Noise floor
+    html += `<div style="margin-top:10px;font-size:0.85rem;color:var(--text-3)">Noise Floor: ${nc.noise_floor_db} dB</div>`;
+
+    display.innerHTML = html;
+}
 
 // Breakdown
 

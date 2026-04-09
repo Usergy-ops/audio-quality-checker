@@ -78,11 +78,28 @@ class SpeechQualityInfo(BaseModel):
     loudness: float  # 1-5 (5=appropriate)
 
 
+class NoiseTypeItem(BaseModel):
+    type: str
+    label: str
+    description: str
+    icon: str
+    confidence: float
+
+
+class NoiseClassification(BaseModel):
+    primary_noise: str
+    primary_label: str
+    noise_types: list[NoiseTypeItem]
+    noise_floor_db: float
+    spectral_profile: dict[str, float]
+
+
 class AIAnalysis(BaseModel):
     language: Optional[LanguageInfo] = None
     speech_activity: Optional[SpeechActivityInfo] = None
     speakers: Optional[SpeakerInfo] = None
     speech_quality: Optional[SpeechQualityInfo] = None
+    noise_classification: Optional[NoiseClassification] = None
 
 
 class ScoreBreakdown(BaseModel):
