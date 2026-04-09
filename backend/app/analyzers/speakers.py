@@ -10,6 +10,7 @@ import numpy as np
 from pathlib import Path
 
 from app.models.schemas import SpeakerInfo
+from app.config import SPEAKER_DETECTION_MAX_SECONDS
 
 # Module-level cache
 _diarization_pipeline = None
@@ -90,7 +91,10 @@ def count_speakers(filepath: Path, max_duration: float = 300) -> SpeakerInfo:
     
     try:
         # Preload audio as waveform to avoid torchcodec issues
-        waveform_np, sr = librosa.load(str(filepath), sr=16000, mono=True)
+        # Cap duration to avoid extremely long processing on CPU
+        max_secs = min(max_duration, SPEAKER_DETECTION_MAX_SECONDS)
+        waveform_np, sr = librosa.load(str(filepath), sr=16000, mono=True, duration=max_secs)
+        print(f"[Speaker Diarization] Processing {len(waveform_np)/16000:.1f}s of audio (cap: {max_secs}s)")
         waveform_tensor = torch.from_numpy(waveform_np).unsqueeze(0).float()
         audio_input = {"waveform": waveform_tensor, "sample_rate": 16000}
         

@@ -60,13 +60,11 @@ def detect_language(filepath: Path) -> LanguageInfo:
     """
     model = _get_model()
     
-    # Load audio (Whisper handles its own loading)
-    audio = whisper.load_audio(str(filepath))
-    
-    # Trim to max detection length
-    max_samples = LANGUAGE_DETECTION_MAX_SECONDS * 16000  # Whisper uses 16kHz
-    if len(audio) > max_samples:
-        audio = audio[:max_samples]
+    # Load only the first N seconds (no need to load entire file)
+    import librosa
+    audio_np, _ = librosa.load(str(filepath), sr=16000, mono=True, duration=LANGUAGE_DETECTION_MAX_SECONDS)
+    audio = audio_np.astype(np.float32)
+    print(f"[Language Detection] Processing {len(audio)/16000:.1f}s of audio (cap: {LANGUAGE_DETECTION_MAX_SECONDS}s)")
     
     # Pad/trim to 30 seconds (Whisper's expected input)
     audio = whisper.pad_or_trim(audio)

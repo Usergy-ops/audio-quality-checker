@@ -9,6 +9,9 @@ from pathlib import Path
 
 from app.models.schemas import SpeechActivityInfo
 
+# Max duration to process for VAD (seconds)
+VAD_MAX_SECONDS = 600  # 10 minutes
+
 # Module-level model cache
 _vad_model = None
 _vad_utils = None
@@ -43,10 +46,20 @@ def detect_speech_activity(filepath: Path) -> SpeechActivityInfo:
     get_speech_timestamps = utils[0]
     
     # Load audio at 16kHz using librosa (reliable, no torchcodec dependency)
+    # Cap duration to avoid slow processing on very long files
     wav = _load_audio_16k(filepath)
     duration = len(wav) / 16000
     
-    if duration == 0:
+    if duration > VAD_MAX_SECONDS:
+        max_samples = int(VAD_MAX_SECONDS * 16000)
+        wav = wav[:max_samples]
+        print(f"[VAD] Trimmed from {duration:.1f}s to {VAD_MAX_SECONDS}s for processing")
+        # Keep original duration for percentage calculations
+        analyzed_duration = VAD_MAX_SECONDS
+    else:
+        analyzed_duration = duration
+    
+    if analyzed_duration == 0:
         return SpeechActivityInfo(
             speech_percentage=0.0, silence_percentage=100.0,
             speech_regions=[], longest_speech_seconds=0.0,
@@ -95,12 +108,12 @@ def detect_speech_activity(filepath: Path) -> SpeechActivityInfo:
             longest_silence = max(longest_silence, gap)
         
         # Silence after last speech
-        trailing = duration - speech_regions[-1]["end_seconds"]
+        trailing = analyzed_duration - speech_regions[-1]["end_seconds"]
         longest_silence = max(longest_silence, trailing)
     else:
-        longest_silence = duration
+        longest_silence = analyzed_duration
     
-    speech_pct = (total_speech / duration) * 100 if duration > 0 else 0
+    speech_pct = (total_speech / analyzed_duration) * 100 if analyzed_duration > 0 else 0
     silence_pct = 100 - speech_pct
     
     return SpeechActivityInfo(
