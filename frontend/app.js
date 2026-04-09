@@ -4,6 +4,13 @@
 
 const API_BASE = window.location.origin;
 
+// Nav scroll effect
+const nav = document.querySelector('.nav');
+window.addEventListener('scroll', () => {
+    if (window.scrollY > 60) nav.classList.add('scrolled');
+    else nav.classList.remove('scrolled');
+}, { passive: true });
+
 // DOM
 const uploadZone = document.getElementById('upload-zone');
 const fileInput = document.getElementById('file-input');
@@ -543,6 +550,28 @@ function initWaveform() {
     const container = document.getElementById('waveform-container');
     container.innerHTML = '';
 
+    const blobUrl = URL.createObjectURL(uploadedFileBlob);
+
+    // Check file duration from analysis result - use fallback for large files
+    const duration = currentResult && currentResult.file_info ? currentResult.file_info.duration_seconds : 0;
+    const MAX_WAVEFORM_DURATION = 300; // 5 minutes
+
+    if (duration > MAX_WAVEFORM_DURATION) {
+        // Use HTML5 audio player for large files
+        container.classList.add('hidden');
+        document.getElementById('waveform-controls').classList.add('hidden');
+        const fallback = document.getElementById('audio-fallback');
+        fallback.classList.remove('hidden');
+        const audioEl = document.getElementById('audio-fallback-player');
+        audioEl.src = blobUrl;
+        return;
+    }
+
+    // WaveSurfer for short files
+    container.classList.remove('hidden');
+    document.getElementById('waveform-controls').classList.remove('hidden');
+    document.getElementById('audio-fallback').classList.add('hidden');
+
     // Detect dark mode
     const isDark = getComputedStyle(document.documentElement).getPropertyValue('--bg-1').trim().startsWith('#1');
 
@@ -560,7 +589,6 @@ function initWaveform() {
         backend: 'WebAudio',
     });
 
-    const blobUrl = URL.createObjectURL(uploadedFileBlob);
     wavesurferInstance.load(blobUrl);
 
     const playBtn = document.getElementById('waveform-play');
@@ -965,11 +993,16 @@ ${vizHtml ? `<div class="section"><h2>Visualizations</h2>${vizHtml}</div>` : ''}
 <p class="meta" style="text-align:center">Powered by <strong>UsergyAI</strong> &mdash; usergy.ai</p>
 </body></html>`;
 
-    // Open in new window and trigger print
-    const win = window.open('', '_blank');
-    win.document.write(html);
-    win.document.close();
-    setTimeout(() => { win.print(); }, 500);
+    // Auto-download as HTML file
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Audio-Report-${(fi.filename || 'Unknown').replace(/\.[^.]+$/, '')}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 }
 
 

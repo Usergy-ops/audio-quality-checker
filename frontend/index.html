@@ -134,9 +134,9 @@
                 <label for="profile-select" class="profile-label">Compliance Profile:</label>
                 <select id="profile-select">
                     <option value="default">General AI Data</option>
-                    <option value="defined_ai">Defined.ai Standard</option>
-                    <option value="appen">Appen / Scale AI</option>
-                    <option value="common_voice">Mozilla Common Voice</option>
+                    <option value="defined_ai">AI Data Platform Standard</option>
+                    <option value="appen">Crowd Platform Standard</option>
+                    <option value="common_voice">Open Speech Dataset</option>
                     <option value="telephony">Telephony / Call Center</option>
                     <option value="broadcast">Broadcast / Podcast</option>
                 </select>
@@ -256,10 +256,15 @@
                 </div>
 
                 <div class="card card-wide reveal" id="waveform-card">
-                    <h3 class="card-heading">Interactive Waveform</h3>
+                    <h3 class="card-heading">Audio Player</h3>
                     <div id="waveform-player">
                         <div id="waveform-container" style="margin-bottom:12px"></div>
-                        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+                        <!-- Fallback for large files -->
+                        <div id="audio-fallback" class="hidden" style="margin-bottom:12px">
+                            <audio id="audio-fallback-player" controls style="width:100%;border-radius:8px"></audio>
+                            <p style="font-size:0.8rem;color:var(--text-3);margin-top:6px">Waveform visualization is available for files under 5 minutes.</p>
+                        </div>
+                        <div id="waveform-controls" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
                             <button id="waveform-play" class="btn btn--solid" style="padding:6px 16px;font-size:0.85rem">▶ Play</button>
                             <span id="waveform-time" style="font-family:monospace;font-size:0.9rem;color:var(--text-2)">0:00 / 0:00</span>
                             <div style="flex:1"></div>
@@ -357,7 +362,7 @@
                 </div>
                 <div class="feature">
                     <h3>✅ Compliance Profiles</h3>
-                    <p>Test against Defined.ai, Appen, Common Voice, Telephony, and Broadcast specs.</p>
+                    <p>Test against 6 industry compliance profiles for AI data, crowd platforms, telephony, and broadcast.</p>
                 </div>
             </div>
         </div>

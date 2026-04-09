@@ -52,10 +52,19 @@ body {
 /* ── Nav ─────────────────────────────────────────── */
 
 .nav {
-    position: sticky;
+    position: fixed;
     top: 0;
+    left: 0;
+    right: 0;
     z-index: 100;
-    background: rgba(255,255,255,0.75);
+    background: transparent;
+    backdrop-filter: none;
+    border-bottom: none;
+    transition: background 0.3s, backdrop-filter 0.3s, border-color 0.3s;
+}
+
+.nav.scrolled {
+    background: rgba(255,255,255,0.85);
     backdrop-filter: blur(12px);
     border-bottom: 1px solid rgba(0,0,0,0.06);
 }
@@ -1451,3 +1460,10 @@ body {
 
 /* Nav toggle color for dark hero */
 .nav-toggle { color: rgba(0,0,0,0.6); }
+
+/* Nav scroll state overrides */
+.nav.scrolled .nav-brand { color: #111111; }
+.nav.scrolled .nav-brand .nav-icon rect { fill: #111; }
+.nav.scrolled .nav-links a { color: rgba(0,0,0,0.55); }
+.nav.scrolled .nav-links a:hover { color: #111; }
+.nav.scrolled .nav-toggle { color: rgba(0,0,0,0.6); }

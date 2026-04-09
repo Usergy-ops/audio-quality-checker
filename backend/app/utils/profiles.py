@@ -19,8 +19,8 @@ PROFILES = {
         "format": "lossless_or_256kbps",
     },
     "defined_ai": {
-        "name": "Defined.ai Standard",
-        "description": "Defined.ai typical RFP requirements",
+        "name": "AI Data Platform Standard",
+        "description": "High-quality AI data platform requirements",
         "sample_rate_min": 48000,
         "bit_depth_min": 24,
         "channels": "mono",
@@ -30,7 +30,7 @@ PROFILES = {
         "format": "lossless",
     },
     "appen": {
-        "name": "Appen / Scale AI",
+        "name": "Crowd Platform Standard",
         "description": "Typical crowd-sourced speech collection specs",
         "sample_rate_min": 16000,
         "bit_depth_min": 16,
@@ -41,8 +41,8 @@ PROFILES = {
         "format": "lossless_or_256kbps",
     },
     "common_voice": {
-        "name": "Mozilla Common Voice",
-        "description": "Open source speech dataset standards",
+        "name": "Open Speech Dataset",
+        "description": "Open-source speech dataset standards",
         "sample_rate_min": 48000,
         "bit_depth_min": 16,
         "channels": "mono",
