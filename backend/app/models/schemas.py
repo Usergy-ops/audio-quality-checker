@@ -108,6 +108,17 @@ class TranscriptionPreview(BaseModel):
     language_used: str
 
 
+class ReverbAnalysis(BaseModel):
+    rt60_seconds: Optional[float] = None
+    rt60_rating: str
+    echo_detected: bool
+    echo_delay_ms: Optional[float] = None
+    echo_strength_db: Optional[float] = None
+    c50_db: Optional[float] = None
+    environment: str
+    reverb_score: float
+
+
 class AIAnalysis(BaseModel):
     language: Optional[LanguageInfo] = None
     speech_activity: Optional[SpeechActivityInfo] = None
@@ -115,6 +126,7 @@ class AIAnalysis(BaseModel):
     speech_quality: Optional[SpeechQualityInfo] = None
     noise_classification: Optional[NoiseClassification] = None
     transcription: Optional[TranscriptionPreview] = None
+    reverb: Optional[ReverbAnalysis] = None
 
 
 class ScoreBreakdown(BaseModel):

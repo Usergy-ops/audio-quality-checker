@@ -192,6 +192,7 @@ function showResults(r) {
     safe(() => renderMOS(r.ai_analysis), 'mos');
     safe(() => renderNoise(r.ai_analysis), 'noise');
     safe(() => renderTranscription(r.ai_analysis), 'transcription');
+    safe(() => renderReverb(r.ai_analysis), 'reverb');
     safe(() => renderBreakdown(r.quality), 'breakdown');
     safe(() => renderCompliance(r.compliance), 'compliance');
     safe(() => renderViz(r.visualizations), 'viz');
@@ -592,6 +593,60 @@ function fmtTime(sec) {
     const m = Math.floor(sec / 60);
     const s = Math.floor(sec % 60);
     return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+// Reverb & Echo
+
+function renderReverb(a) {
+    const card = document.getElementById('reverb-card');
+    if (!a || !a.reverb) {
+        card.classList.add('hidden');
+        return;
+    }
+    card.classList.remove('hidden');
+    const rv = a.reverb;
+    const display = document.getElementById('reverb-display');
+
+    const envIcons = {
+        'Recording booth / Anechoic': '🎙️',
+        'Treated room / Small studio': '🏠',
+        'Office / Small room': '🏢',
+        'Medium room / Conference room': '🏛️',
+        'Untreated room with reflections': '📦',
+        'Large room / Hall': '🏟️',
+        'Very large space / Cathedral': '⛪',
+    };
+    const icon = envIcons[rv.environment] || '🔊';
+
+    const scoreColor = rv.reverb_score < 20 ? '#27ae60' : rv.reverb_score < 50 ? '#F5A623' : '#E74C3C';
+
+    let html = `<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+        <span style="font-size:2rem">${icon}</span>
+        <div>
+            <div style="font-weight:600;font-size:1.1rem">${rv.environment}</div>
+            <div style="color:var(--text-3);font-size:0.85rem">Reverb score: <span style="color:${scoreColor};font-weight:600">${rv.reverb_score}</span>/100</div>
+        </div>
+    </div>`;
+
+    // Metrics grid
+    html += '<div class="data-grid">';
+
+    if (rv.rt60_seconds != null) {
+        const rt60Label = {'dry':'Dry','moderate':'Moderate','reverberant':'Reverberant','very_reverberant':'Very Reverberant'}[rv.rt60_rating] || rv.rt60_rating;
+        html += `<div class="data-item"><span class="data-label">RT60</span><span class="data-value">${rv.rt60_seconds}s</span><span class="data-sub">${rt60Label}</span></div>`;
+    }
+
+    if (rv.c50_db != null) {
+        html += `<div class="data-item"><span class="data-label">Clarity (C50)</span><span class="data-value">${rv.c50_db} dB</span><span class="data-sub">${rv.c50_db > 5 ? 'Clear' : rv.c50_db > -2 ? 'Moderate' : 'Muddy'}</span></div>`;
+    }
+
+    html += `<div class="data-item"><span class="data-label">Echo</span><span class="data-value">${rv.echo_detected ? '\u26A0\uFE0F Detected' : '\u2705 None'}</span>`;
+    if (rv.echo_detected && rv.echo_delay_ms) {
+        html += `<span class="data-sub">${rv.echo_delay_ms}ms delay, ${rv.echo_strength_db}dB</span>`;
+    }
+    html += '</div></div>';
+
+    display.innerHTML = html;
 }
 
 function escHtml(str) {
