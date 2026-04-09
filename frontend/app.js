@@ -118,6 +118,7 @@ function handleFile(file) {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('retain', retain.toString());
+    formData.append('profile', document.getElementById('profile-select').value);
 
     // Show progress
     uploadZone.classList.add('hidden');
@@ -595,9 +596,27 @@ function setupReveal() {
 
 // ── Init ────────────────────────────────────────────
 
+const PROFILE_DESCRIPTIONS = {
+    'default': 'Common requirements for AI training data',
+    'defined_ai': 'Defined.ai typical RFP requirements (strict)',
+    'appen': 'Typical crowd-sourced speech collection specs',
+    'common_voice': 'Open source speech dataset standards',
+    'telephony': 'Telephony-grade audio (8kHz, low bandwidth)',
+    'broadcast': 'High-quality broadcast audio standards',
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     setupMobileNav();
     setupUpload();
     setupButtons();
     setupReveal();
+
+    // Profile selector
+    const sel = document.getElementById('profile-select');
+    const desc = document.getElementById('profile-desc');
+    if (sel && desc) {
+        sel.addEventListener('change', () => {
+            desc.textContent = PROFILE_DESCRIPTIONS[sel.value] || '';
+        });
+    }
 });

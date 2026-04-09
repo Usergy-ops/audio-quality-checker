@@ -27,6 +27,7 @@ ANALYSIS_TIMEOUT = 600  # 10 minutes — large files on CPU need time
 async def analyze_audio(
     file: UploadFile = File(...),
     retain: bool = Form(True),
+    profile: str = Form("default"),
 ):
     """
     Upload an audio file and get a detailed quality analysis report.
@@ -62,6 +63,7 @@ async def analyze_audio(
                 filepath=temp_path,
                 original_filename=file.filename or "unknown",
                 file_size=file_size,
+                profile_name=profile,
             )
         )
         try:

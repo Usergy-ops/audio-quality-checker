@@ -309,180 +309,197 @@ def calculate_compliance(
     file_info: FileInfo | None,
     signal_analysis: SignalAnalysis | None,
     ai_analysis: AIAnalysis | None,
+    profile_name: str = "default",
 ) -> ComplianceSummary:
     """
-    Check audio against common AI data project specifications.
+    Check audio against a compliance spec profile.
     Returns pass/warn/fail for each metric.
     """
+    from app.utils.profiles import get_profile
+    profile = get_profile(profile_name)
     checks = []
     
     # Sample Rate
-    if file_info and file_info.sample_rate:
+    sr_min = profile.get("sample_rate_min", 16000)
+    if file_info and file_info.sample_rate and sr_min:
         sr = file_info.sample_rate
-        if sr >= 16000:
+        if sr >= sr_min:
             checks.append(ComplianceCheck(
                 metric="Sample Rate", status="pass",
-                value=f"{sr:,} Hz", threshold="≥ 16,000 Hz",
+                value=f"{sr:,} Hz", threshold=f"\u2265 {sr_min:,} Hz",
                 message=f"Sample rate is {sr:,} Hz"
             ))
-        elif sr >= 8000:
+        elif sr >= sr_min * 0.5:
             checks.append(ComplianceCheck(
                 metric="Sample Rate", status="warn",
-                value=f"{sr:,} Hz", threshold="≥ 16,000 Hz",
-                message=f"Sample rate {sr:,} Hz is below recommended 16kHz"
+                value=f"{sr:,} Hz", threshold=f"\u2265 {sr_min:,} Hz",
+                message=f"Sample rate {sr:,} Hz is below required {sr_min:,} Hz"
             ))
         else:
             checks.append(ComplianceCheck(
                 metric="Sample Rate", status="fail",
-                value=f"{sr:,} Hz", threshold="≥ 16,000 Hz",
-                message=f"Sample rate {sr:,} Hz is too low for speech"
+                value=f"{sr:,} Hz", threshold=f"\u2265 {sr_min:,} Hz",
+                message=f"Sample rate {sr:,} Hz is too low"
             ))
     
     # Bit Depth
-    if file_info and file_info.bit_depth:
+    bd_min = profile.get("bit_depth_min", 16)
+    if file_info and file_info.bit_depth and bd_min:
         bd = file_info.bit_depth
-        if bd >= 16:
+        if bd >= bd_min:
             checks.append(ComplianceCheck(
                 metric="Bit Depth", status="pass",
-                value=f"{bd}-bit", threshold="≥ 16-bit",
+                value=f"{bd}-bit", threshold=f"\u2265 {bd_min}-bit",
                 message=f"{bd}-bit audio"
             ))
         else:
             checks.append(ComplianceCheck(
                 metric="Bit Depth", status="warn",
-                value=f"{bd}-bit", threshold="≥ 16-bit",
-                message=f"{bd}-bit is below standard 16-bit"
+                value=f"{bd}-bit", threshold=f"\u2265 {bd_min}-bit",
+                message=f"{bd}-bit is below required {bd_min}-bit"
             ))
     
     # Channels
-    if file_info:
+    ch_req = profile.get("channels")
+    if file_info and ch_req:
         ch = file_info.channels
-        if ch == 1:
-            checks.append(ComplianceCheck(
-                metric="Channels", status="pass",
-                value="Mono", threshold="Mono preferred",
-                message="Mono audio (preferred for speech)"
-            ))
-        elif ch == 2:
-            checks.append(ComplianceCheck(
-                metric="Channels", status="warn",
-                value="Stereo", threshold="Mono preferred",
-                message="Stereo - many projects require mono"
-            ))
-        else:
-            checks.append(ComplianceCheck(
-                metric="Channels", status="warn",
-                value=f"{ch} channels", threshold="Mono preferred",
-                message=f"{ch} channels - should be converted to mono"
-            ))
+        if ch_req == "mono":
+            if ch == 1:
+                checks.append(ComplianceCheck(
+                    metric="Channels", status="pass",
+                    value="Mono", threshold="Mono required",
+                    message="Mono audio"
+                ))
+            else:
+                checks.append(ComplianceCheck(
+                    metric="Channels", status="warn",
+                    value=f"{ch} channels", threshold="Mono required",
+                    message=f"{ch} channels \u2014 should be mono"
+                ))
     
     # Clipping
-    if signal_analysis and signal_analysis.clipping:
+    clip_max = profile.get("clipping_max_pct", 0.1)
+    if signal_analysis and signal_analysis.clipping and clip_max is not None:
         pct = signal_analysis.clipping.percentage
-        if pct == 0:
+        if pct <= clip_max:
             checks.append(ComplianceCheck(
                 metric="Clipping", status="pass",
-                value="None", threshold="0%",
-                message="No clipping detected"
+                value=f"{pct:.4f}%" if pct > 0 else "None",
+                threshold=f"< {clip_max}%",
+                message="No significant clipping" if pct <= clip_max else "Clipping within limits"
             ))
-        elif pct < 0.1:
+        elif pct < clip_max * 5:
             checks.append(ComplianceCheck(
                 metric="Clipping", status="warn",
-                value=f"{pct:.4f}%", threshold="< 0.1%",
+                value=f"{pct:.4f}%", threshold=f"< {clip_max}%",
                 message="Minor clipping detected"
             ))
         else:
             checks.append(ComplianceCheck(
                 metric="Clipping", status="fail",
-                value=f"{pct:.2f}%", threshold="< 0.1%",
+                value=f"{pct:.2f}%", threshold=f"< {clip_max}%",
                 message="Significant clipping detected"
             ))
     
     # SNR
-    if signal_analysis and signal_analysis.snr_db is not None:
+    snr_min = profile.get("snr_min_db", 20)
+    if signal_analysis and signal_analysis.snr_db is not None and snr_min:
         snr = signal_analysis.snr_db
-        if snr >= 20:
+        if snr >= snr_min:
             checks.append(ComplianceCheck(
                 metric="SNR", status="pass",
-                value=f"{snr:.1f} dB", threshold="≥ 20 dB",
-                message=f"Good signal-to-noise ratio"
+                value=f"{snr:.1f} dB", threshold=f"\u2265 {snr_min} dB",
+                message="Good signal-to-noise ratio"
             ))
-        elif snr >= 15:
+        elif snr >= snr_min * 0.75:
             checks.append(ComplianceCheck(
                 metric="SNR", status="warn",
-                value=f"{snr:.1f} dB", threshold="≥ 20 dB",
-                message=f"Acceptable but noisy"
+                value=f"{snr:.1f} dB", threshold=f"\u2265 {snr_min} dB",
+                message="Acceptable but noisy"
             ))
         else:
             checks.append(ComplianceCheck(
                 metric="SNR", status="fail",
-                value=f"{snr:.1f} dB", threshold="≥ 20 dB",
-                message=f"Too noisy for most projects"
+                value=f"{snr:.1f} dB", threshold=f"\u2265 {snr_min} dB",
+                message="Too noisy"
             ))
     
-    # Silence percentage
-    if signal_analysis and signal_analysis.silence:
+    # Silence
+    sil_max = profile.get("silence_max_pct", 10)
+    if signal_analysis and signal_analysis.silence and sil_max is not None:
         sil = signal_analysis.silence.percentage
-        if sil <= 10:
+        if sil <= sil_max:
             checks.append(ComplianceCheck(
                 metric="Silence", status="pass",
-                value=f"{sil:.1f}%", threshold="≤ 10%",
+                value=f"{sil:.1f}%", threshold=f"\u2264 {sil_max}%",
                 message="Acceptable silence level"
             ))
-        elif sil <= 20:
+        elif sil <= sil_max * 2:
             checks.append(ComplianceCheck(
                 metric="Silence", status="warn",
-                value=f"{sil:.1f}%", threshold="≤ 10%",
+                value=f"{sil:.1f}%", threshold=f"\u2264 {sil_max}%",
                 message="Higher than ideal silence"
             ))
         else:
             checks.append(ComplianceCheck(
                 metric="Silence", status="fail",
-                value=f"{sil:.1f}%", threshold="≤ 10%",
+                value=f"{sil:.1f}%", threshold=f"\u2264 {sil_max}%",
                 message="Excessive silence"
             ))
     
     # Format
-    if file_info:
+    fmt_req = profile.get("format", "lossless_or_256kbps")
+    if file_info and fmt_req and fmt_req != "any":
         codec = (file_info.codec or "").lower()
         br = file_info.bit_rate or 0
-        if any(x in codec for x in ["pcm", "flac", "aiff"]):
-            checks.append(ComplianceCheck(
-                metric="Format", status="pass",
-                value="Lossless", threshold="Lossless or ≥ 256kbps",
-                message="Lossless format - ideal"
-            ))
-        elif br >= 256000:
-            checks.append(ComplianceCheck(
-                metric="Format", status="pass",
-                value=f"{br // 1000}kbps", threshold="Lossless or ≥ 256kbps",
-                message="High quality lossy"
-            ))
-        elif br >= 128000:
-            checks.append(ComplianceCheck(
-                metric="Format", status="warn",
-                value=f"{br // 1000}kbps", threshold="Lossless or ≥ 256kbps",
-                message="Medium quality - acceptable"
-            ))
-        elif br > 0:
-            checks.append(ComplianceCheck(
-                metric="Format", status="fail",
-                value=f"{br // 1000}kbps", threshold="Lossless or ≥ 256kbps",
-                message="Low quality - may affect analysis"
-            ))
+        is_lossless = any(x in codec for x in ["pcm", "flac", "aiff", "alac"])
+        
+        if fmt_req == "lossless":
+            if is_lossless:
+                checks.append(ComplianceCheck(
+                    metric="Format", status="pass",
+                    value="Lossless", threshold="Lossless required",
+                    message="Lossless format"
+                ))
+            else:
+                checks.append(ComplianceCheck(
+                    metric="Format", status="fail",
+                    value=f"Lossy ({br // 1000}kbps)" if br else "Lossy",
+                    threshold="Lossless required",
+                    message="Lossy format \u2014 lossless required"
+                ))
+        else:  # lossless_or_256kbps
+            if is_lossless:
+                checks.append(ComplianceCheck(
+                    metric="Format", status="pass",
+                    value="Lossless", threshold="Lossless or \u2265 256kbps",
+                    message="Lossless format"
+                ))
+            elif br >= 256000:
+                checks.append(ComplianceCheck(
+                    metric="Format", status="pass",
+                    value=f"{br // 1000}kbps", threshold="Lossless or \u2265 256kbps",
+                    message="High quality lossy"
+                ))
+            elif br >= 128000:
+                checks.append(ComplianceCheck(
+                    metric="Format", status="warn",
+                    value=f"{br // 1000}kbps", threshold="Lossless or \u2265 256kbps",
+                    message="Medium quality"
+                ))
+            elif br > 0:
+                checks.append(ComplianceCheck(
+                    metric="Format", status="fail",
+                    value=f"{br // 1000}kbps", threshold="Lossless or \u2265 256kbps",
+                    message="Low quality"
+                ))
     
     # Count results
     pass_count = sum(1 for c in checks if c.status == "pass")
     warn_count = sum(1 for c in checks if c.status == "warn")
     fail_count = sum(1 for c in checks if c.status == "fail")
     
-    # Overall status
-    if fail_count > 0:
-        overall = "fail"
-    elif warn_count > 0:
-        overall = "warn"
-    else:
-        overall = "pass"
+    overall = "fail" if fail_count > 0 else ("warn" if warn_count > 0 else "pass")
     
     return ComplianceSummary(
         overall=overall,

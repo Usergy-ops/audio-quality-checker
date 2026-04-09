@@ -82,6 +82,20 @@
                 <span class="retain-text">Help us improve &mdash; your file may be used to enhance our analysis</span>
             </label>
 
+            <!-- Compliance Profile Selector -->
+            <div class="profile-selector" id="profile-selector">
+                <label for="profile-select" class="profile-label">Compliance Profile:</label>
+                <select id="profile-select">
+                    <option value="default">General AI Data</option>
+                    <option value="defined_ai">Defined.ai Standard</option>
+                    <option value="appen">Appen / Scale AI</option>
+                    <option value="common_voice">Mozilla Common Voice</option>
+                    <option value="telephony">Telephony / Call Center</option>
+                    <option value="broadcast">Broadcast / Podcast</option>
+                </select>
+                <span class="profile-desc" id="profile-desc">Common requirements for AI training data</span>
+            </div>
+
             <!-- Progress -->
             <div id="progress-section" class="progress hidden">
                 <div class="progress-top">

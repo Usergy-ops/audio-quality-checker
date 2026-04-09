@@ -57,6 +57,12 @@ app.add_middleware(
 # Routes
 app.include_router(analyze_router, prefix="/api")
 
+
+@app.get("/api/profiles")
+async def list_profiles():
+    from app.utils.profiles import get_profile_names
+    return get_profile_names()
+
 # Frontend static files
 FRONTEND_DIR = Path(__file__).resolve().parent.parent.parent / "frontend"
 

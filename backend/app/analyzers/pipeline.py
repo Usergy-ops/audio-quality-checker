@@ -27,6 +27,7 @@ def run_analysis_pipeline(
     filepath: Path,
     original_filename: str,
     file_size: int,
+    profile_name: str = "default",
 ) -> AnalysisResponse:
     """
     Run the complete analysis pipeline on an audio file.
@@ -168,7 +169,7 @@ def run_analysis_pipeline(
     
     # ── Step 5b: Compliance Check ──
     try:
-        compliance = calculate_compliance(file_info, signal_analysis, ai_analysis)
+        compliance = calculate_compliance(file_info, signal_analysis, ai_analysis, profile_name)
     except Exception as e:
         errors.append(f"Compliance check failed: {str(e)[:200]}")
         traceback.print_exc()
