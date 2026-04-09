@@ -227,30 +227,34 @@ function renderSignal(s) {
     if (!s) return;
     const items = [];
 
-    if (s.levels) {
-        const l = s.levels;
-        items.push(
-            ['Peak Level', l.peak_db != null ? `${l.peak_db.toFixed(1)} dB` : '-'],
-            ['RMS Level', l.rms_db != null ? `${l.rms_db.toFixed(1)} dB` : '-'],
-            ['Dynamic Range', l.dynamic_range_db != null ? `${l.dynamic_range_db.toFixed(1)} dB` : '-'],
-        );
+    // Signal levels are top-level fields, not nested
+    items.push(
+        ['Peak Level', s.peak_amplitude_db != null ? `${s.peak_amplitude_db.toFixed(1)} dB` : '-'],
+        ['RMS Level', s.rms_level_db != null ? `${s.rms_level_db.toFixed(1)} dB` : '-'],
+        ['Dynamic Range', s.dynamic_range_db != null ? `${s.dynamic_range_db.toFixed(1)} dB` : '-'],
+    );
+
+    // SNR is a top-level field
+    if (s.snr_db != null) {
+        items.push(['SNR', `${s.snr_db.toFixed(1)} dB`]);
     }
 
-    if (s.noise) {
-        items.push(['SNR', s.noise.snr_db != null ? `${s.noise.snr_db.toFixed(1)} dB` : '-']);
+    // Noise floor
+    if (s.noise_floor_db != null) {
+        items.push(['Noise Floor', `${s.noise_floor_db.toFixed(1)} dB`]);
     }
 
     if (s.clipping) {
         const c = s.clipping;
         items.push(
-            ['Clipping', c.has_clipping ? 'Detected' : 'None', c.has_clipping ? 'bad' : 'good'],
+            ['Clipping', c.detected ? `Detected (${c.percentage.toFixed(2)}%)` : 'None', c.detected ? 'bad' : 'good'],
             ['Clipped Samples', c.clipped_samples != null ? c.clipped_samples.toLocaleString() : '-'],
         );
     }
 
     if (s.silence) {
         items.push(
-            ['Silence', `${(s.silence.silence_percentage ?? 0).toFixed(1)}%`],
+            ['Silence', `${(s.silence.percentage ?? 0).toFixed(1)}%`],
             ['Longest Silent', s.silence.longest_silence_seconds != null ? `${s.silence.longest_silence_seconds.toFixed(1)}s` : '-'],
         );
     }
@@ -271,22 +275,31 @@ function renderAI(a) {
 
     if (a.language) {
         const l = a.language;
+        const langDisplay = l.name || l.detected || '-';
         items.push(
-            ['Language', l.language || '-'],
+            ['Language', langDisplay],
             ['Confidence', l.confidence != null ? `${(l.confidence * 100).toFixed(0)}%` : '-'],
         );
+        if (l.alternatives && l.alternatives.length > 0) {
+            const alt = l.alternatives.slice(0, 2).map(a => a.name || a.language).join(', ');
+            items.push(['Alternatives', alt || '-']);
+        }
     }
 
     if (a.speech_activity) {
         const sa = a.speech_activity;
         items.push(
             ['Speech', `${(sa.speech_percentage ?? 0).toFixed(1)}%`],
-            ['Segments', sa.speech_segments != null ? sa.speech_segments : '-'],
+            ['Regions', sa.speech_regions ? sa.speech_regions.length : '-'],
+            ['Longest Speech', sa.longest_speech_seconds != null ? `${sa.longest_speech_seconds.toFixed(1)}s` : '-'],
         );
     }
 
     if (a.speakers) {
         items.push(['Speakers', a.speakers.count != null ? a.speakers.count : '-']);
+        if (a.speakers.turn_count) {
+            items.push(['Turns', a.speakers.turn_count]);
+        }
     }
 
     document.getElementById('ai-grid').innerHTML = items.map(toDataItem).join('');
@@ -339,8 +352,9 @@ function renderCompliance(c) {
         <div class="compliance-row">
             <span class="compliance-dot ${ch.status}"></span>
             <div class="compliance-info">
-                <span class="compliance-name">${ch.check}</span>
-                <span class="compliance-detail">${ch.detail || ''}</span>
+                <span class="compliance-name">${ch.metric || '-'}</span>
+                <span class="compliance-detail">${ch.message || ''}</span>
+                <span class="compliance-detail">${ch.value || ''} ${ch.threshold ? '(threshold: ' + ch.threshold + ')' : ''}</span>
             </div>
         </div>`).join('');
 }
