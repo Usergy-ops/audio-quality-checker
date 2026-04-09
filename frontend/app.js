@@ -732,6 +732,8 @@ document.addEventListener('DOMContentLoaded', () => {
     setupUpload();
     setupButtons();
     setupReveal();
+    setupModeToggle();
+    setupBatch();
 
     // Profile selector
     const sel = document.getElementById('profile-select');
@@ -742,3 +744,232 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+
+// ── Mode Toggle ────────────────────────────────────────
+
+let currentMode = 'single';
+
+function setupModeToggle() {
+    const btns = document.querySelectorAll('.mode-btn');
+    btns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            btns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentMode = btn.dataset.mode;
+
+            const singleZone = document.getElementById('upload-zone');
+            const batchZone = document.getElementById('batch-upload-zone');
+            const batchList = document.getElementById('batch-file-list');
+
+            if (currentMode === 'batch') {
+                singleZone.classList.add('hidden');
+                batchZone.classList.remove('hidden');
+            } else {
+                singleZone.classList.remove('hidden');
+                batchZone.classList.add('hidden');
+                batchList.classList.add('hidden');
+            }
+        });
+    });
+}
+
+
+// ── Batch Upload ──────────────────────────────────────
+
+let batchFiles = [];
+let batchResult = null;
+
+function setupBatch() {
+    const batchZone = document.getElementById('batch-upload-zone');
+    const batchInput = document.getElementById('batch-file-input');
+    const batchBrowse = document.getElementById('batch-browse');
+
+    batchZone.addEventListener('click', () => batchInput.click());
+
+    batchZone.addEventListener('dragover', e => {
+        e.preventDefault();
+        batchZone.classList.add('dragover');
+    });
+    batchZone.addEventListener('dragleave', () => batchZone.classList.remove('dragover'));
+    batchZone.addEventListener('drop', e => {
+        e.preventDefault();
+        batchZone.classList.remove('dragover');
+        if (e.dataTransfer.files.length) handleBatchFiles(e.dataTransfer.files);
+    });
+
+    batchInput.addEventListener('change', () => {
+        if (batchInput.files.length) handleBatchFiles(batchInput.files);
+    });
+
+    document.getElementById('btn-batch-new').addEventListener('click', resetBatch);
+    document.getElementById('btn-batch-csv').addEventListener('click', downloadBatchCsv);
+}
+
+function handleBatchFiles(fileList) {
+    batchFiles = Array.from(fileList).slice(0, 20);
+    const listEl = document.getElementById('batch-file-list');
+    listEl.classList.remove('hidden');
+
+    let html = `<div style="margin-bottom:8px"><strong>${batchFiles.length} file${batchFiles.length > 1 ? 's' : ''} selected</strong></div>`;
+    batchFiles.forEach((f, i) => {
+        html += `<div class="batch-file-item"><span>${i+1}. ${f.name}</span><span style="color:var(--text-3)">${fmtSize(f.size)}</span></div>`;
+    });
+    html += `<button class="btn btn--solid" style="margin-top:12px;width:100%" id="btn-batch-start">Analyze ${batchFiles.length} Files</button>`;
+    listEl.innerHTML = html;
+
+    document.getElementById('btn-batch-start').addEventListener('click', startBatchAnalysis);
+}
+
+async function startBatchAnalysis() {
+    if (!batchFiles.length) return;
+
+    const profile = document.getElementById('profile-select').value;
+    const formData = new FormData();
+    batchFiles.forEach(f => formData.append('files', f));
+    formData.append('profile', profile);
+
+    // Show progress
+    document.getElementById('batch-upload-zone').classList.add('hidden');
+    document.getElementById('batch-file-list').classList.add('hidden');
+    document.getElementById('mode-toggle').classList.add('hidden');
+    retainLabel.classList.add('hidden');
+    document.getElementById('profile-selector').classList.add('hidden');
+    progressSection.classList.remove('hidden');
+    progressFilename.textContent = `Batch: ${batchFiles.length} files`;
+    progressPercent.textContent = '';
+    progressFill.style.width = '0%';
+    progressStatus.innerHTML = '<span class="spinner"></span>Uploading files...';
+
+    try {
+        const xhr = new XMLHttpRequest();
+        xhr.upload.addEventListener('progress', e => {
+            if (!e.lengthComputable) return;
+            const pct = Math.round((e.loaded / e.total) * 100);
+            progressPercent.textContent = pct + '%';
+            progressFill.style.width = pct + '%';
+            if (pct === 100) {
+                progressStatus.innerHTML = '<span class="spinner"></span>Analyzing files... This may take a few minutes.';
+                stageStart = Date.now();
+                stageInterval = setInterval(() => {
+                    const elapsed = Math.round((Date.now() - stageStart) / 1000);
+                    progressStatus.innerHTML = `<span class="spinner"></span>Analyzing files... ${elapsed}s`;
+                }, 1000);
+            }
+        });
+
+        const result = await new Promise((resolve, reject) => {
+            xhr.addEventListener('load', () => {
+                stopStages();
+                if (xhr.status === 200) {
+                    resolve(JSON.parse(xhr.responseText));
+                } else {
+                    try { reject(JSON.parse(xhr.responseText).detail); }
+                    catch { reject(`Server error (${xhr.status})`); }
+                }
+            });
+            xhr.addEventListener('error', () => reject('Network error'));
+            xhr.addEventListener('timeout', () => reject('Batch analysis timed out'));
+            xhr.open('POST', `${API_BASE}/api/analyze-batch`);
+            xhr.timeout = 600000;
+            xhr.send(formData);
+        });
+
+        batchResult = result;
+        showBatchResults(result);
+
+    } catch (err) {
+        stopStages();
+        showError(typeof err === 'string' ? err : 'Batch analysis failed');
+    }
+}
+
+function showBatchResults(data) {
+    progressSection.classList.add('hidden');
+    const batchSection = document.getElementById('batch-results-section');
+    batchSection.classList.remove('hidden');
+
+    const s = data.summary;
+
+    // Summary card
+    document.getElementById('batch-summary').innerHTML = `
+        <h3 class="card-heading">Batch Summary</h3>
+        <div class="batch-summary-grid">
+            <div class="batch-stat">
+                <div class="batch-stat-value">${s.total}</div>
+                <div class="batch-stat-label">Files</div>
+            </div>
+            <div class="batch-stat">
+                <div class="batch-stat-value" style="color:#27ae60">${s.success}</div>
+                <div class="batch-stat-label">Success</div>
+            </div>
+            <div class="batch-stat">
+                <div class="batch-stat-value" style="color:${s.failed > 0 ? '#E74C3C' : '#27ae60'}">${s.failed}</div>
+                <div class="batch-stat-label">Failed</div>
+            </div>
+            <div class="batch-stat">
+                <div class="batch-stat-value">${s.avg_score}</div>
+                <div class="batch-stat-label">Avg Score</div>
+            </div>
+            <div class="batch-stat">
+                <div class="batch-stat-value">${s.processing_time_seconds}s</div>
+                <div class="batch-stat-label">Total Time</div>
+            </div>
+        </div>
+    `;
+
+    // Results table
+    const files = s.files || [];
+    let tableHtml = `<h3 class="card-heading">Results</h3>
+        <div style="overflow-x:auto"><table class="batch-table">
+        <thead><tr><th>#</th><th>Filename</th><th>Duration</th><th>Score</th><th>Grade</th><th>MOS</th><th>Language</th><th>Compliance</th><th>Time</th></tr></thead><tbody>`;
+
+    files.forEach((f, i) => {
+        const scoreColor = f.score >= 80 ? '#27ae60' : f.score >= 60 ? '#F5A623' : '#E74C3C';
+        const compIcon = f.compliance === 'pass' ? '\u2705' : f.compliance === 'warn' ? '\u26A0\uFE0F' : '\u274C';
+        tableHtml += `<tr>
+            <td>${i+1}</td>
+            <td title="${f.filename}">${(f.filename || '-').substring(0, 30)}</td>
+            <td>${f.duration || '-'}</td>
+            <td style="color:${scoreColor};font-weight:600">${f.score ?? '-'}</td>
+            <td>${f.grade || '-'}</td>
+            <td>${f.mos != null ? f.mos.toFixed(1) : '-'}</td>
+            <td>${f.language || '-'}</td>
+            <td>${compIcon} ${f.compliance || '-'}</td>
+            <td>${f.time}s</td>
+        </tr>`;
+    });
+
+    tableHtml += '</tbody></table></div>';
+    document.getElementById('batch-table-container').innerHTML = tableHtml;
+}
+
+function downloadBatchCsv() {
+    if (!batchResult) return;
+    const files = batchResult.summary.files || [];
+    let csv = 'Filename,Duration,Score,Grade,MOS,Language,Compliance,Time(s)\n';
+    files.forEach(f => {
+        csv += `"${f.filename || ''}","${f.duration || ''}",${f.score ?? ''},${f.grade || ''},${f.mos != null ? f.mos.toFixed(1) : ''},"${f.language || ''}",${f.compliance || ''},${f.time}\n`;
+    });
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `batch-report-${Date.now()}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+function resetBatch() {
+    document.getElementById('batch-results-section').classList.add('hidden');
+    document.getElementById('batch-upload-zone').classList.remove('hidden');
+    document.getElementById('mode-toggle').classList.remove('hidden');
+    retainLabel.classList.remove('hidden');
+    document.getElementById('profile-selector').classList.remove('hidden');
+    document.getElementById('batch-file-list').classList.add('hidden');
+    progressSection.classList.add('hidden');
+    batchFiles = [];
+    batchResult = null;
+}

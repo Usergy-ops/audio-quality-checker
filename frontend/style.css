@@ -1187,3 +1187,91 @@ body {
     color: var(--text-3);
     font-style: italic;
 }
+
+/* Mode Toggle */
+.mode-toggle {
+    display: flex;
+    gap: 4px;
+    background: var(--bg-2);
+    border-radius: 10px;
+    padding: 4px;
+    margin-bottom: 16px;
+    width: fit-content;
+}
+.mode-btn {
+    padding: 8px 20px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-2);
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+.mode-btn.active {
+    background: var(--accent);
+    color: white;
+}
+.mode-btn:hover:not(.active) {
+    color: var(--text-1);
+}
+
+/* Batch file list */
+.batch-file-list {
+    margin: 12px 0;
+    padding: 12px;
+    background: var(--bg-2);
+    border-radius: 10px;
+    font-size: 0.9rem;
+}
+.batch-file-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+}
+.batch-file-item:last-child { border-bottom: none; }
+
+/* Batch summary */
+.batch-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 16px;
+    margin-bottom: 16px;
+}
+.batch-stat {
+    text-align: center;
+    padding: 12px;
+}
+.batch-stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--accent);
+}
+.batch-stat-label {
+    font-size: 0.8rem;
+    color: var(--text-3);
+    margin-top: 4px;
+}
+
+/* Batch table */
+.batch-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+.batch-table th, .batch-table td {
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+}
+.batch-table th {
+    background: var(--bg-2);
+    font-weight: 600;
+    color: var(--text-2);
+    position: sticky;
+    top: 0;
+}
+.batch-table tr:hover { background: var(--bg-2); }

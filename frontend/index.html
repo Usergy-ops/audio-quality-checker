@@ -61,6 +61,12 @@
             <h1 class="hero-title">Understand your audio quality<br>in seconds</h1>
             <p class="hero-sub">Upload any audio file. Get a detailed report with quality scores,<br class="hide-mobile"> signal analysis, language detection, and compliance checks.</p>
 
+            <!-- Mode toggle -->
+            <div class="mode-toggle" id="mode-toggle">
+                <button class="mode-btn active" data-mode="single">Single File</button>
+                <button class="mode-btn" data-mode="batch">Batch Analysis</button>
+            </div>
+
             <!-- Upload -->
             <div id="upload-zone" class="upload-zone">
                 <div class="upload-inner">
@@ -74,6 +80,23 @@
                 </div>
                 <input type="file" id="file-input" accept=".wav,.mp3,.flac,.ogg,.aac,.m4a,.aiff,.aif,.opus,.webm,.wma,.amr" hidden>
             </div>
+
+            <!-- Batch Upload -->
+            <div id="batch-upload-zone" class="upload-zone hidden">
+                <div class="upload-inner">
+                    <svg class="upload-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/>
+                        <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    <p class="upload-main">Drop multiple files here, or <span class="upload-browse" id="batch-browse">browse</span></p>
+                    <p class="upload-hint">Up to 20 files &middot; WAV, MP3, FLAC, OGG, AAC, M4A, AIFF, OPUS, WebM, WMA, AMR</p>
+                </div>
+                <input type="file" id="batch-file-input" accept=".wav,.mp3,.flac,.ogg,.aac,.m4a,.aiff,.aif,.opus,.webm,.wma,.amr" multiple hidden>
+            </div>
+
+            <!-- Batch file list -->
+            <div id="batch-file-list" class="batch-file-list hidden"></div>
 
             <!-- Retain opt-in -->
             <label class="retain" id="retain-label">
@@ -210,6 +233,18 @@
                     PDF Report
                 </button>
                 <button id="btn-new-analysis" class="btn btn--solid">Analyze another file</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Batch Results -->
+    <section id="batch-results-section" class="results hidden">
+        <div class="container">
+            <div id="batch-summary" class="card card-wide"></div>
+            <div id="batch-table-container" class="card card-wide" style="margin-top:16px"></div>
+            <div class="actions" style="margin-top:20px">
+                <button id="btn-batch-csv" class="btn btn--outline">Download CSV</button>
+                <button id="btn-batch-new" class="btn btn--solid">New Batch Analysis</button>
             </div>
         </div>
     </section>

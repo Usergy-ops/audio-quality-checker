@@ -99,3 +99,86 @@ async def analyze_audio(
             cleanup_temp_file(temp_path)
             converted = temp_path.with_suffix(".converted.wav")
             cleanup_temp_file(converted)
+
+
+@router.post("/analyze-batch")
+async def analyze_batch(
+    files: list[UploadFile] = File(...),
+    profile: str = Form("default"),
+):
+    """
+    Analyze multiple audio files. Returns a summary + individual results.
+    Max 20 files per batch.
+    """
+    if len(files) > 20:
+        raise HTTPException(status_code=400, detail="Maximum 20 files per batch.")
+    if len(files) == 0:
+        raise HTTPException(status_code=400, detail="No files provided.")
+
+    start_time = time.time()
+    results = []
+    summary = {"total": len(files), "success": 0, "failed": 0, "avg_score": 0, "files": []}
+
+    for f in files:
+        file_start = time.time()
+        temp_path = None
+        try:
+            content = await f.read()
+            file_size = len(content)
+            is_valid, error_msg = validate_file(f.filename or "unknown", file_size)
+            if not is_valid:
+                results.append({"filename": f.filename, "success": False, "error": error_msg})
+                summary["failed"] += 1
+                continue
+
+            temp_path = save_temp_file(content, f.filename or "upload.wav")
+            del content
+
+            loop = asyncio.get_event_loop()
+            result = await asyncio.wait_for(
+                loop.run_in_executor(
+                    _analysis_pool,
+                    lambda p=temp_path, fn=f.filename, fs=file_size: run_analysis_pipeline(
+                        filepath=p, original_filename=fn or "unknown",
+                        file_size=fs, profile_name=profile,
+                    )
+                ),
+                timeout=ANALYSIS_TIMEOUT,
+            )
+            result.processing_time_seconds = round(time.time() - file_start, 2)
+
+            file_summary = {
+                "filename": f.filename,
+                "success": result.success,
+                "score": result.quality.score if result.quality else None,
+                "grade": result.quality.grade if result.quality else None,
+                "duration": result.file_info.duration_formatted if result.file_info else None,
+                "language": result.ai_analysis.language.name if result.ai_analysis and result.ai_analysis.language else None,
+                "mos": result.ai_analysis.speech_quality.mos if result.ai_analysis and result.ai_analysis.speech_quality else None,
+                "compliance": result.compliance.overall if result.compliance else None,
+                "time": result.processing_time_seconds,
+            }
+            summary["files"].append(file_summary)
+            summary["success"] += 1
+
+            # Strip visualizations from batch results to reduce response size
+            result.visualizations = None
+            results.append(result.model_dump())
+
+        except asyncio.TimeoutError:
+            results.append({"filename": f.filename, "success": False, "error": "Analysis timed out"})
+            summary["failed"] += 1
+        except Exception as e:
+            results.append({"filename": f.filename, "success": False, "error": str(e)[:200]})
+            summary["failed"] += 1
+        finally:
+            if temp_path:
+                cleanup_temp_file(temp_path)
+                cleanup_temp_file(temp_path.with_suffix(".converted.wav"))
+
+    # Calculate averages
+    scores = [f["score"] for f in summary["files"] if f.get("score") is not None]
+    summary["avg_score"] = round(sum(scores) / len(scores), 1) if scores else 0
+    summary["processing_time_seconds"] = round(time.time() - start_time, 2)
+
+    return {"summary": summary, "results": results}
