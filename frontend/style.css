@@ -261,21 +261,48 @@ body {
 /* ── Upload ──────────────────────────────────────── */
 
 .upload-zone {
-    max-width: 560px;
+    max-width: 600px;
     margin: 0 auto;
-    border: 1.5px dashed rgba(0,0,0,0.15);
-    border-radius: var(--radius-lg);
+    border: 1.5px dashed var(--border);
+    border-radius: var(--radius);
     cursor: pointer;
-    transition: all 0.3s ease;
-    background: rgba(255,255,255,0.55);
-    backdrop-filter: blur(12px);
+    transition: border-color 0.2s, background 0.2s;
+    background: var(--paper-deep);
+    position: relative;
+}
+
+/* Ember corner brackets on the dropzone — brand signature device */
+.upload-zone::before,
+.upload-zone::after {
+    content: "";
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    opacity: 0.55;
+}
+.upload-zone::before {
+    top: -1px; left: -1px;
+    border-top: 2px solid var(--ember);
+    border-left: 2px solid var(--ember);
+}
+.upload-zone::after {
+    bottom: -1px; right: -1px;
+    border-bottom: 2px solid var(--ember);
+    border-right: 2px solid var(--ember);
+}
+.upload-zone:hover::before,
+.upload-zone:hover::after,
+.upload-zone.dragover::before,
+.upload-zone.dragover::after {
+    opacity: 1;
 }
 
 .upload-zone:hover,
 .upload-zone.dragover {
-    border-color: var(--accent);
-    background: rgba(13, 148, 136, 0.12);
-    box-shadow: 0 0 30px rgba(13, 148, 136, 0.15);
+    border-color: var(--ember);
+    background: var(--accent-light);
 }
 
 .upload-inner {
@@ -290,25 +317,29 @@ body {
 
 .upload-main {
     font-size: 15px;
-    color: var(--text);
+    color: var(--ground-green);
+    font-family: var(--font);
 }
 
 .upload-browse {
-    color: var(--accent);
-    font-weight: 500;
+    color: var(--ember-ink);
+    font-weight: 600;
     text-decoration: underline;
-    text-decoration-color: transparent;
-    transition: text-decoration-color 0.15s;
+    text-decoration-color: var(--ember);
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1.5px;
 }
 
 .upload-zone:hover .upload-browse {
-    text-decoration-color: var(--accent);
+    color: var(--ember);
 }
 
 .upload-hint {
-    margin-top: 8px;
+    margin-top: 10px;
     font-size: 12px;
-    color: var(--text-3);
+    color: var(--slate);
+    font-family: var(--font-mono);
+    letter-spacing: 0.02em;
 }
 
 /* ── Retain checkbox ─────────────────────────────── */
@@ -903,30 +934,31 @@ body {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 10px 20px;
-    border-radius: 8px;
+    padding: 12px 24px;
+    border-radius: 100px;
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;
     border: none;
     font-family: var(--font);
     transition: all 0.15s;
+    min-height: 44px;
 }
 
 .btn--solid {
-    background: var(--black);
-    color: #fff;
+    background: var(--ground-green);
+    color: var(--paper);
 }
 
-.btn--solid:hover { opacity: 0.85; }
+.btn--solid:hover { background: var(--ember); color: var(--paper); }
 
 .btn--outline {
-    background: var(--bg);
-    color: var(--text);
-    border: 1px solid var(--border);
+    background: var(--paper);
+    color: var(--ground-green);
+    border: 1px solid var(--ground-green);
 }
 
-.btn--outline:hover { border-color: #aaa; }
+.btn--outline:hover { border-color: var(--ember); color: var(--ember-ink); }
 
 /* ── Features ────────────────────────────────────── */
 
@@ -1290,36 +1322,35 @@ body {
     font-style: italic;
 }
 
-/* Mode Toggle */
+/* Mode Toggle — pill group, ember active state */
 .mode-toggle {
     display: inline-flex;
     gap: 4px;
-    background: rgba(255,255,255,0.55);
-    border-radius: 12px;
+    background: var(--paper-deep);
+    border-radius: 100px;
     padding: 4px;
-    margin-bottom: 20px;
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(0,0,0,0.08);
+    margin-bottom: 28px;
+    border: 1px solid var(--border);
 }
 .mode-btn {
-    padding: 8px 22px;
+    padding: 9px 22px;
     border: none;
-    border-radius: 10px;
+    border-radius: 100px;
     background: transparent;
-    color: rgba(0,0,0,0.45);
+    color: var(--slate);
     cursor: pointer;
     font-size: 0.85rem;
     font-weight: 500;
     transition: all 0.2s;
     font-family: var(--font);
+    min-height: 36px;
 }
 .mode-btn.active {
-    background: var(--accent);
-    color: white;
-    box-shadow: 0 2px 8px rgba(13,148,136,0.3);
+    background: var(--ground-green);
+    color: var(--paper);
 }
 .mode-btn:hover:not(.active) {
-    color: rgba(0,0,0,0.75);
+    color: var(--ground-green);
 }
 
 /* Batch file list */
