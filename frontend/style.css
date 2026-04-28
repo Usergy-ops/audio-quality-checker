@@ -90,9 +90,9 @@ body {
 }
 
 .nav.scrolled {
-    background: rgba(255,255,255,0.85);
+    background: rgba(245, 242, 232, 0.92);
     backdrop-filter: blur(12px);
-    border-bottom: 1px solid rgba(0,0,0,0.06);
+    border-bottom: 1px solid var(--border);
 }
 
 .nav-inner {
@@ -141,13 +141,13 @@ body {
 
 .nav-links a {
     text-decoration: none;
-    color: rgba(0,0,0,0.55);
+    color: var(--slate);
     font-size: 14px;
     font-weight: 450;
     transition: color 0.15s;
 }
 
-.nav-links a:hover { color: #111111; }
+.nav-links a:hover { color: var(--ground-green); }
 
 .nav-cta {
     background: var(--accent) !important;
@@ -1347,14 +1347,14 @@ body {
     border-radius: 8px;
     border: 1px solid rgba(0,0,0,0.1);
     background: rgba(255,255,255,0.55);
-    color: #1a1a1a;
+    color: var(--ground-green);
     font-size: 0.85rem;
     cursor: pointer;
     backdrop-filter: blur(8px);
 }
 .profile-selector select option {
     background: #fff;
-    color: #1a1a1a;
+    color: var(--ground-green);
 }
 .profile-desc {
     font-size: 0.8rem;
@@ -1499,8 +1499,8 @@ body {
     font-weight: 500;
 }
 .compare-table th { background: var(--bg-2); font-weight: 600; }
-.compare-better { color: #27ae60; font-weight: 600; }
-.compare-worse { color: #E74C3C; }
+.compare-better { color: var(--status-pass); font-weight: 600; }
+.compare-worse { color: var(--status-fail); }
 @media (max-width: 600px) {
     .compare-upload-pair { flex-direction: column; }
     .compare-vs { transform: rotate(90deg); }
@@ -1600,9 +1600,9 @@ body {
 .nav-toggle { color: rgba(0,0,0,0.6); }
 
 /* Nav scroll state overrides */
-.nav.scrolled .nav-brand { color: #111111; }
+.nav.scrolled .nav-brand { color: var(--ground-green); }
 .nav.scrolled .nav-brand .nav-icon rect { fill: #111; }
-.nav.scrolled .nav-links a { color: rgba(0,0,0,0.55); }
+.nav.scrolled .nav-links a { color: var(--slate); }
 .nav.scrolled .nav-links a:hover { color: #111; }
 .nav.scrolled .nav-toggle { color: rgba(0,0,0,0.6); }
 
@@ -1672,7 +1672,7 @@ body {
 /* ── Score Card Enhancement ───────────────────────── */
 
 .score-card {
-    background: linear-gradient(135deg, #f8fffe 0%, #f0fdf9 100%) !important;
+    background: var(--paper-deep) !important;
 }
 
 /* ── Section Nav Enhancement ──────────────────────── */
@@ -1792,7 +1792,7 @@ body {
 .mode-option-name {
     font-size: 14px;
     font-weight: 600;
-    color: #1a1a1a;
+    color: var(--ground-green);
 }
 
 .mode-option-desc {
@@ -1807,7 +1807,7 @@ body {
 
 /* Hero overrides for analysis mode */
 .hero .analysis-mode-label {
-    color: rgba(0,0,0,0.55);
+    color: var(--slate);
 }
 
 /* ── Toast Notifications ── */
@@ -1834,27 +1834,27 @@ body {
     gap: 12px;
     pointer-events: auto;
     animation: toastSlideIn 0.3s ease-out;
-    border-left: 4px solid var(--toast-color, #1a1a1a);
+    border-left: 4px solid var(--toast-color, var(--ground-green));
 }
 
 .toast.toast-error {
     --toast-color: #e53935;
-    background: linear-gradient(135deg, #fff 0%, #fff5f5 100%);
+    background: var(--paper);
 }
 
 .toast.toast-success {
     --toast-color: #00897b;
-    background: linear-gradient(135deg, #fff 0%, #f0fdf9 100%);
+    background: var(--paper);
 }
 
 .toast.toast-warning {
     --toast-color: #f9a825;
-    background: linear-gradient(135deg, #fff 0%, #fffbeb 100%);
+    background: var(--paper);
 }
 
 .toast.toast-info {
     --toast-color: #1976d2;
-    background: linear-gradient(135deg, #fff 0%, #f0f7ff 100%);
+    background: var(--paper);
 }
 
 .toast-icon {
@@ -1871,7 +1871,7 @@ body {
 .toast-title {
     font-weight: 600;
     font-size: 14px;
-    color: #1a1a1a;
+    color: var(--ground-green);
     margin-bottom: 4px;
 }
 
