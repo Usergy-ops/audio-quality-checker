@@ -153,6 +153,51 @@ function stopStages() {
     if (stageInterval) { clearInterval(stageInterval); stageInterval = null; }
 }
 
+// ── Server-side progress polling ────────────────────
+// When the upload finishes, we poll the backend for real-time stage progress.
+// Overrides the rotating-message stages with actual pipeline state.
+
+let serverProgressPoll = null;
+const STAGE_LABELS = {
+    received:       'Upload received',
+    metadata:       'Reading file metadata',
+    convert:        'Converting to WAV',
+    signal:         'Analyzing signal quality',
+    ai:             'Running AI analysis',
+    scoring:        'Calculating quality score',
+    compliance:     'Running compliance checks',
+    visualizations: 'Rendering visualizations',
+    done:           'Finalizing',
+};
+
+function startServerProgressPoll(jobId) {
+    if (!jobId) return;
+    if (serverProgressPoll) clearInterval(serverProgressPoll);
+    serverProgressPoll = setInterval(async () => {
+        try {
+            const r = await fetch(`${API_BASE}/api/analyze/progress/${jobId}`);
+            if (r.status === 404) return;   // progress not yet written or already cleared
+            if (!r.ok) return;
+            const data = await r.json();
+            if (!data || typeof data.progress_pct !== 'number') return;
+
+            // Override rotating messages once we have real server state
+            stopStages();
+            const pct = Math.max(0, Math.min(100, data.progress_pct));
+            progressPercent.textContent = pct.toFixed(0) + '%';
+            progressFill.style.width = pct.toFixed(1) + '%';
+            const label = STAGE_LABELS[data.stage] || data.message || 'Processing';
+            const elapsed = stageStart ? Math.round((Date.now() - stageStart) / 1000) : 0;
+            const timer = `<span style="color:var(--slate);font-size:0.85em;margin-left:8px">${elapsed}s</span>`;
+            progressStatus.innerHTML = `<span class="spinner"></span>${label}${timer}`;
+        } catch { /* network blips are fine, next tick will retry */ }
+    }, 1500);
+}
+
+function stopServerProgressPoll() {
+    if (serverProgressPoll) { clearInterval(serverProgressPoll); serverProgressPoll = null; }
+}
+
 
 // ── Mobile Nav ──────────────────────────────────────
 
@@ -204,11 +249,19 @@ function handleFile(file) {
 
     const retain = document.getElementById('retain-checkbox').checked;
     const analysisMode = document.querySelector('input[name="analysis-mode"]:checked')?.value || 'quick';
+
+    // Generate a job id so the server can publish progress and we can poll for it.
+    // Crypto API is available over HTTPS everywhere we run.
+    const jobId = (self.crypto && self.crypto.randomUUID)
+        ? self.crypto.randomUUID()
+        : Math.random().toString(36).slice(2) + Date.now().toString(36);
+
     const formData = new FormData();
     formData.append('file', file);
     formData.append('retain', retain.toString());
     formData.append('profile', document.getElementById('profile-select').value);
     formData.append('mode', analysisMode);
+    formData.append('job_id', jobId);
 
     // Show progress
     uploadZone.classList.add('hidden');
@@ -231,11 +284,14 @@ function handleFile(file) {
         if (pct === 100) {
             progressStatus.innerHTML = '<span class="spinner"></span>Analyzing...';
             startStages(analysisMode);
+            // Switch from upload-progress to server-progress polling
+            startServerProgressPoll(jobId);
         }
     });
 
     xhr.addEventListener('load', () => {
         stopStages();
+        stopServerProgressPoll();
         if (xhr.status === 200) {
             try {
                 currentResult = JSON.parse(xhr.responseText);
@@ -253,9 +309,9 @@ function handleFile(file) {
         }
     });
 
-    xhr.addEventListener('error', () => showAnalysisFailure('disconnect', file));
-    xhr.addEventListener('abort', () => showAnalysisFailure('aborted', file));
-    xhr.addEventListener('timeout', () => showAnalysisFailure('timeout', file));
+    xhr.addEventListener('error', () => { stopServerProgressPoll(); showAnalysisFailure('disconnect', file); });
+    xhr.addEventListener('abort', () => { stopServerProgressPoll(); showAnalysisFailure('aborted', file); });
+    xhr.addEventListener('timeout', () => { stopServerProgressPoll(); showAnalysisFailure('timeout', file); });
 
     xhr.open('POST', `${API_BASE}/api/analyze`);
     xhr.timeout = 600000; // 10 minutes. Large files on CPU take time.

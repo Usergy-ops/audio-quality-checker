@@ -17,6 +17,7 @@ from app.models.schemas import AnalysisResponse, ErrorResponse
 from app.utils.audio import validate_file, validate_audio_content, save_temp_file, cleanup_temp_file, save_upload
 from app.utils.api_auth import optional_api_key
 from app.utils.profiles import is_valid_mode, is_valid_profile, VALID_MODES, PROFILES
+from app.utils import progress as _progress
 from app.analyzers.pipeline import run_analysis_pipeline
 
 router = APIRouter()
@@ -39,6 +40,7 @@ async def analyze_audio(
     retain: bool = Form(True),
     profile: str = Form("default"),
     mode: str = Form("quick"),
+    job_id: str = Form(""),   # optional client-supplied id for progress polling
     key_info: dict = Depends(optional_api_key),
 ):
     """
@@ -83,13 +85,16 @@ async def analyze_audio(
         # Save to temp
         temp_path = save_temp_file(content, file.filename or "upload.wav")
         del content  # Free memory
-        
+
         # Validate audio content (check for actual audio stream)
         is_valid_audio, audio_error = validate_audio_content(temp_path)
         if not is_valid_audio:
             cleanup_temp_file(temp_path)
             raise HTTPException(status_code=400, detail=audio_error)
-        
+
+        # Surface an initial progress snapshot so /progress responds from the get-go
+        _progress.mark(job_id, "received", 1, "Upload received, starting analysis")
+
         # Run analysis pipeline in thread pool with timeout
         loop = asyncio.get_event_loop()
         future = loop.run_in_executor(
@@ -100,6 +105,7 @@ async def analyze_audio(
                 file_size=file_size,
                 profile_name=profile,
                 mode=mode,
+                job_id=job_id or None,
             )
         )
         try:
@@ -129,6 +135,8 @@ async def analyze_audio(
             detail=f"Analysis failed: {str(e)[:200]}"
         )
     finally:
+        # Drop the progress file now that the analysis is complete or dead
+        _progress.clear(job_id)
         # Don't cleanup temp files on timeout — the analysis thread may still be reading them.
         # Orphaned temp files are acceptable; they'll be cleaned on next restart.
         if temp_path and not timed_out:
@@ -266,3 +274,16 @@ async def analyze_batch(
     summary["processing_time_seconds"] = round(time.time() - start_time, 2)
 
     return {"summary": summary, "results": results}
+
+
+@router.get("/analyze/progress/{job_id}")
+async def analyze_progress(request: Request, job_id: str):
+    """
+    Poll for real-time progress of an in-flight analysis.
+    Returns: { job_id, stage, progress_pct, message, updated_at } when known.
+    Returns 404 when the job is unknown, finished, or cleared.
+    """
+    data = _progress.read(job_id)
+    if data is None:
+        raise HTTPException(status_code=404, detail="No progress available for this job")
+    return data

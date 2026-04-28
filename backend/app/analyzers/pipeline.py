@@ -25,6 +25,7 @@ from app.analyzers.emotion import analyze_emotion
 from app.utils.audio import convert_to_wav, smart_sample
 from app.utils.scoring import calculate_quality_score, calculate_compliance
 from app.utils.visualizations import generate_all_visualizations
+from app.utils import progress as _progress
 
 
 def run_analysis_pipeline(
@@ -33,12 +34,16 @@ def run_analysis_pipeline(
     file_size: int,
     profile_name: str = "default",
     mode: str = "quick",
+    job_id: str | None = None,
 ) -> AnalysisResponse:
     """
     Run the complete analysis pipeline on an audio file.
     Each analyzer is called in sequence, errors in one don't stop the rest.
-    
-    mode: "quick" = fast essential metrics, "deep" = full AI analysis
+
+    mode:   "quick" = fast essential metrics, "deep" = full AI analysis
+    job_id: optional opaque id. When provided, progress is published to a
+            file at /tmp/aqc-progress-{job_id}.json so the frontend can
+            poll for real-time stage updates.
     """
     is_deep = mode == "deep"
     errors = []
@@ -48,23 +53,29 @@ def run_analysis_pipeline(
     quality = None
     compliance = None
     visualizations = None
-    
+
+    # Weights tuned so the bar advances sensibly through both modes. Each
+    # step's contribution matches its rough wall-time cost on CPU.
+    _progress.mark(job_id, "metadata", 2, "Reading file metadata")
+
     # ── Step 1: Extract metadata (ffprobe) ──
     try:
         file_info = extract_metadata(filepath, original_filename, file_size)
     except Exception as e:
         errors.append(f"Metadata extraction failed: {str(e)[:200]}")
         traceback.print_exc()
-    
+
     # ── Step 2: Convert to WAV for processing ──
+    _progress.mark(job_id, "convert", 5, "Converting to WAV")
     wav_path = filepath
     try:
         wav_path = convert_to_wav(filepath)
     except Exception as e:
         errors.append(f"Audio conversion failed: {str(e)[:200]}")
         traceback.print_exc()
-    
+
     # ── Step 3: Signal analysis (librosa) ──
+    _progress.mark(job_id, "signal", 15, "Analyzing signal")
     # This loads the audio ONCE — all subsequent analyzers reuse this data
     audio_data = None
     sr = None
@@ -127,6 +138,7 @@ def run_analysis_pipeline(
         traceback.print_exc()
     
     # ── Step 4: AI Analysis (parallel) ──
+    _progress.mark(job_id, "ai", 40, "Running language detection and voice activity" if not is_deep else "Running AI analyzers (speakers, MOS, noise, transcription)")
     # Run language, VAD, and speakers concurrently for speed
     from concurrent.futures import ThreadPoolExecutor
     language_info = None
@@ -207,6 +219,7 @@ def run_analysis_pipeline(
         )
     
     # ── Step 5: Quality Scoring ──
+    _progress.mark(job_id, "scoring", 80, "Calculating quality score")
     try:
         quality = calculate_quality_score(file_info, signal_analysis, ai_analysis)
     except Exception as e:
@@ -214,6 +227,7 @@ def run_analysis_pipeline(
         traceback.print_exc()
     
     # ── Step 5b: Compliance Check ──
+    _progress.mark(job_id, "compliance", 85, "Running compliance checks")
     try:
         compliance = calculate_compliance(file_info, signal_analysis, ai_analysis, profile_name)
     except Exception as e:
@@ -221,6 +235,7 @@ def run_analysis_pipeline(
         traceback.print_exc()
     
     # ── Step 6: Visualizations ──
+    _progress.mark(job_id, "visualizations", 90, "Rendering visualizations")
     if audio_data is not None and sr is not None:
         try:
             speech_act = ai_analysis.speech_activity if ai_analysis else None
@@ -237,7 +252,9 @@ def run_analysis_pipeline(
     if wav_path != filepath:
         from app.utils.audio import cleanup_temp_file
         cleanup_temp_file(wav_path)
-    
+
+    _progress.mark(job_id, "done", 100, "Analysis complete")
+
     return AnalysisResponse(
         success=len(errors) == 0 or file_info is not None,
         file_info=file_info,
