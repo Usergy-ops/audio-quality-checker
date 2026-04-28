@@ -115,13 +115,13 @@ const STAGES_DEEP = [
 ];
 
 const WAIT_MESSAGES = [
-    'Still processing — larger files take longer...',
+    'Still processing. Larger files take longer.',
     'Deep analysis in progress...',
     'Running speaker diarization (CPU-intensive)...',
     'Crunching the numbers...',
-    'Hang tight — almost there...',
+    'Hang tight. Almost there.',
     'Generating detailed visualizations...',
-    'Still working — quality takes time...',
+    'Still working. Quality takes time.',
 ];
 
 let stageStart = 0;
@@ -253,7 +253,7 @@ function handleFile(file) {
     xhr.addEventListener('timeout', () => showError('Analysis timed out. The file may be too large for CPU processing. This will be much faster on GPU.'));
 
     xhr.open('POST', `${API_BASE}/api/analyze`);
-    xhr.timeout = 600000; // 10 minutes — large files on CPU take time
+    xhr.timeout = 600000; // 10 minutes. Large files on CPU take time.
     xhr.send(formData);
 }
 

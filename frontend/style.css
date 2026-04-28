@@ -1004,24 +1004,49 @@ body {
 
 .features {
     padding: 100px 0;
-    background: var(--bg);
+    background: var(--paper);
     border-top: 1px solid var(--border);
 }
 
-.section-title {
-    font-size: clamp(24px, 4vw, 32px);
-    font-weight: 700;
-    letter-spacing: -0.02em;
+.section-kicker {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    color: var(--ember-ink);
     text-align: center;
-    color: var(--black);
-    margin-bottom: 8px;
+    margin-bottom: 10px;
 }
 
+.section-kicker-rule {
+    width: 64px;
+    height: 2px;
+    background: var(--ember);
+    margin: 0 auto 28px;
+}
+
+.section-title {
+    font-family: var(--font-display);
+    font-size: clamp(28px, 4.5vw, 44px);
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    text-align: center;
+    color: var(--ground-green);
+    margin-bottom: 12px;
+    line-height: 1.1;
+}
+
+.section-title .ember { color: var(--ember); }
+
 .section-sub {
-    font-size: 15px;
-    color: var(--text-2);
+    font-size: 17px;
+    color: var(--slate);
     text-align: center;
     margin-bottom: 56px;
+    max-width: 620px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.6;
 }
 
 .feature-grid {
@@ -1036,19 +1061,32 @@ body {
 
 .feature {
     padding: 32px 28px;
-    background: var(--bg);
+    background: var(--paper);
+    position: relative;
+}
+
+.feature-num {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    color: var(--ember-ink);
+    margin-bottom: 10px;
 }
 
 .feature h3 {
-    font-size: 15px;
+    font-family: var(--font-display);
+    font-size: 17px;
     font-weight: 600;
-    margin-bottom: 6px;
-    color: var(--black);
+    margin-bottom: 8px;
+    color: var(--ground-green);
+    letter-spacing: -0.01em;
 }
 
 .feature p {
     font-size: 14px;
-    color: var(--text-2);
+    color: var(--slate);
     line-height: 1.6;
 }
 
@@ -1056,7 +1094,7 @@ body {
 
 .how {
     padding: 100px 0;
-    background: var(--bg-2);
+    background: var(--paper-deep);
     border-top: 1px solid var(--border);
 }
 
@@ -1065,47 +1103,47 @@ body {
     align-items: flex-start;
     justify-content: center;
     gap: 0;
-    margin-top: 56px;
+    margin-top: 24px;
 }
 
 .step {
     text-align: center;
-    max-width: 220px;
+    max-width: 260px;
     padding: 0 16px;
 }
 
 .step-num {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: var(--black);
-    color: #fff;
+    display: block;
+    font-family: var(--font-mono);
     font-size: 14px;
-    font-weight: 600;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--ember-ink);
     margin-bottom: 16px;
 }
 
 .step h3 {
-    font-size: 15px;
+    font-family: var(--font-display);
+    font-size: 20px;
     font-weight: 600;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
+    color: var(--ground-green);
+    letter-spacing: -0.01em;
 }
 
 .step p {
     font-size: 14px;
-    color: var(--text-2);
+    color: var(--slate);
     line-height: 1.6;
 }
 
 .step-line {
     width: 60px;
-    height: 1px;
-    background: var(--border);
-    margin-top: 18px;
+    height: 2px;
+    background: var(--ember);
+    margin-top: 24px;
     flex-shrink: 0;
+    opacity: 0.4;
 }
 
 /* ── Footer ──────────────────────────────────────── */
