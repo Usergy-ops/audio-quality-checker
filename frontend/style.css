@@ -4,32 +4,58 @@
 ───────────────────────────────────────────────────── */
 
 :root {
-    --black: #111111;
-    --text: #1a1a1a;
-    --text-1: #1a1a1a;
-    --text-2: #555555;
-    --text-3: #888888;
-    --border: #e2e2e2;
-    --bg: #ffffff;
-    --bg-1: #ffffff;
-    --bg-2: #f8f9fa;
-    --bg-3: #f0f1f2;
-    --accent: #0d9488;
-    --accent-light: #e6f7f5;
-    --accent-glow: rgba(13, 148, 136, 0.15);
-    --green: #1b7a34;
-    --green-bg: #f0faf1;
-    --yellow: #b45309;
-    --yellow-bg: #fef9ed;
-    --red: #b91c1c;
-    --red-bg: #fef2f2;
-    --radius: 12px;
-    --radius-lg: 16px;
-    --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    /* ── UsergyAI Brand Foundation v2 (LOCKED palette) ── */
+    --paper:          #F5F2E8;   /* Warm Paper — primary surface */
+    --ground-green:   #0D1F1C;   /* Ground Green — all body text, ink */
+    --ember:          #E8552B;   /* Ember — signature accent (brackets, CTAs) */
+    --ember-ink:      #C43F19;   /* Ember-ink — accessible text variant */
+    --moss:           #2F4A3F;   /* Moss — dark takeovers, secondary surfaces */
+    --clay:           #C8B8A0;   /* Clay — illustration + UI accents */
+    --slate:          #5B6B66;   /* Slate — body text on paper when Ground is too heavy */
+    --paper-deep:     #E8E4D5;   /* deeper paper for subtle surfaces */
+
+    /* Status signal tones (tuned to Root & Ember) */
+    --status-pass:     #2F4A3F;
+    --status-pass-bg:  #E5ECE7;
+    --status-warn:     #C77A2B;
+    --status-warn-bg:  #FAEEDA;
+    --status-fail:     #C43F19;
+    --status-fail-bg:  #FCE8E1;
+
+    /* Typography */
+    --font:         'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     --font-display: 'Space Grotesk', 'Inter', sans-serif;
-    --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
-    --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
-    --shadow-lg: 0 8px 30px rgba(0,0,0,0.10);
+    --font-mono:    'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+    /* Radius — brand is crisp */
+    --radius:    4px;
+    --radius-lg: 8px;
+
+    /* Shadows — subtle, brand avoids heavy drop-shadows */
+    --shadow-sm: 0 1px 2px rgba(13, 31, 28, 0.06);
+    --shadow-md: 0 2px 8px rgba(13, 31, 28, 0.08);
+    --shadow-lg: 0 8px 24px rgba(13, 31, 28, 0.10);
+
+    /* Backward-compat aliases — old names map to new tokens, so nothing breaks mid-migration */
+    --black:        var(--ground-green);
+    --text:         var(--ground-green);
+    --text-1:       var(--ground-green);
+    --text-2:       var(--slate);
+    --text-3:       var(--clay);
+    --border:       #D8D3C3;
+    --bg:           var(--paper);
+    --bg-1:         var(--paper);
+    --bg-2:         var(--paper-deep);
+    --bg-3:         #DED8C7;
+    --accent:       var(--ember);
+    --accent-light: #FCE8E1;
+    --accent-glow:  rgba(232, 85, 43, 0.15);
+    --green:        var(--status-pass);
+    --green-bg:     var(--status-pass-bg);
+    --yellow:       var(--status-warn);
+    --yellow-bg:    var(--status-warn-bg);
+    --red:          var(--status-fail);
+    --red-bg:       var(--status-fail-bg);
 }
 
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
