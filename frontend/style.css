@@ -460,24 +460,45 @@ body {
     border-top: 1px solid var(--border);
 }
 
-/* Score card */
+/* Score card — dominant brand moment */
 .score-card {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 40px;
-    padding: 48px 32px;
-    background: var(--bg);
-    border: 1px solid var(--border);
+    gap: 48px;
+    padding: 56px 40px;
+    background: var(--paper);
+    border: 1.5px solid var(--ground-green);
     border-radius: var(--radius);
-    margin-bottom: 24px;
+    margin-bottom: 28px;
     flex-wrap: wrap;
+    position: relative;
+}
+
+/* Ember corner marks on the score card */
+.score-card::before,
+.score-card::after {
+    content: "";
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    pointer-events: none;
+}
+.score-card::before {
+    top: -2px; left: -2px;
+    border-top: 2.5px solid var(--ember);
+    border-left: 2.5px solid var(--ember);
+}
+.score-card::after {
+    bottom: -2px; right: -2px;
+    border-bottom: 2.5px solid var(--ember);
+    border-right: 2.5px solid var(--ember);
 }
 
 .score-ring-wrap {
     position: relative;
-    width: 130px;
-    height: 130px;
+    width: 150px;
+    height: 150px;
 }
 
 .score-ring {
@@ -488,13 +509,13 @@ body {
 
 .score-ring-bg {
     fill: none;
-    stroke: var(--bg-3);
+    stroke: var(--paper-deep);
     stroke-width: 6;
 }
 
 .score-ring-fill {
     fill: none;
-    stroke: var(--accent);
+    stroke: var(--ember);
     stroke-width: 6;
     stroke-linecap: round;
     stroke-dasharray: 326.726;
@@ -512,31 +533,39 @@ body {
 }
 
 .score-num {
-    font-size: 36px;
+    font-family: var(--font-display);
+    font-size: 48px;
     font-weight: 700;
-    color: var(--black);
+    color: var(--ground-green);
     line-height: 1;
+    letter-spacing: -0.03em;
 }
 
 .score-of {
-    font-size: 13px;
-    color: var(--text-3);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--slate);
+    letter-spacing: 0.08em;
+    margin-top: 2px;
 }
 
 .score-meta { text-align: left; }
 
 .score-grade {
-    font-size: 48px;
+    font-family: var(--font-display);
+    font-size: 64px;
     font-weight: 700;
     line-height: 1;
-    margin-bottom: 4px;
-    color: var(--accent);
+    margin-bottom: 8px;
+    color: var(--ember);
+    letter-spacing: -0.04em;
 }
 
 .score-summary {
     font-size: 15px;
-    color: var(--text-2);
-    max-width: 260px;
+    color: var(--slate);
+    max-width: 280px;
+    line-height: 1.5;
 }
 
 /* Cards */
@@ -547,21 +576,20 @@ body {
 }
 
 .card {
-    background: var(--bg);
+    background: var(--paper);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 24px;
+    padding: 28px;
 }
 
 .card {
-    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
     scroll-margin-top: 100px;
 }
 
 .card:hover {
-    border-color: #ccc;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.07);
+    border-color: var(--ember);
+    box-shadow: var(--shadow-sm);
 }
 
 .card-wide { grid-column: 1 / -1; }
@@ -579,15 +607,15 @@ body {
 }
 
 .card-heading {
-    font-size: 13px;
+    font-family: var(--font-mono);
+    font-size: 12px;
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--text-3);
+    letter-spacing: 0.18em;
+    color: var(--ember-ink);
     margin-bottom: 20px;
 }
 
-.card-heading--warn { color: var(--yellow); }
+.card-heading--warn { color: var(--status-warn); }
 
 /* Data grid */
 .data-grid {
