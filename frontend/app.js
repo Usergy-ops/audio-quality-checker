@@ -239,18 +239,23 @@ function handleFile(file) {
         if (xhr.status === 200) {
             try {
                 currentResult = JSON.parse(xhr.responseText);
+                lastFailedAnalysis = null;
                 showResults(currentResult);
-            } catch { showError('Invalid response from server.'); }
+            } catch { showAnalysisFailure('bad-response', file); }
         } else {
+            // Backend returned a structured error
+            let detail = `Server returned HTTP ${xhr.status}.`;
             try {
                 const err = JSON.parse(xhr.responseText);
-                showError(err.detail || err.error || 'Analysis failed.');
-            } catch { showError(`Server error (${xhr.status}).`); }
+                detail = err.detail || err.error || detail;
+            } catch {}
+            showAnalysisFailure('server-error', file, { status: xhr.status, detail });
         }
     });
 
-    xhr.addEventListener('error', () => showError('Network error. Check your connection.'));
-    xhr.addEventListener('timeout', () => showError('Analysis timed out. The file may be too large for CPU processing. This will be much faster on GPU.'));
+    xhr.addEventListener('error', () => showAnalysisFailure('disconnect', file));
+    xhr.addEventListener('abort', () => showAnalysisFailure('aborted', file));
+    xhr.addEventListener('timeout', () => showAnalysisFailure('timeout', file));
 
     xhr.open('POST', `${API_BASE}/api/analyze`);
     xhr.timeout = 600000; // 10 minutes. Large files on CPU take time.
@@ -1118,6 +1123,90 @@ function showError(msg) {
     document.getElementById('analysis-mode').classList.remove('hidden');
     document.getElementById('profile-selector').classList.remove('hidden');
     showToast(msg, 'error', 'Analysis Failed', 8000);
+}
+
+// State held so "Try again" can replay the exact same analysis
+let lastFailedAnalysis = null;
+
+/**
+ * Persistent, actionable error UI for analysis failures.
+ * @param {string} kind  One of: disconnect | timeout | server-error | bad-response | aborted
+ * @param {File}   file  The original File object (so we can re-submit)
+ * @param {object} meta  Optional: { status, detail } from server
+ */
+function showAnalysisFailure(kind, file, meta) {
+    stopStages();
+    lastFailedAnalysis = { file, meta };
+
+    const titles = {
+        'disconnect':     'Server disconnected',
+        'timeout':        'Analysis timed out',
+        'server-error':   'Server error',
+        'bad-response':   'Unexpected server response',
+        'aborted':        'Analysis cancelled',
+    };
+    const bodies = {
+        'disconnect':     'The server dropped the connection while analyzing your file. This can happen with very large files under high load. Your file is fine \u2014 the analysis just didn\'t finish.',
+        'timeout':        'Analysis ran longer than 10 minutes on CPU and was cut off. For very large or very long files, try again in Quick mode first, or split the file into shorter segments.',
+        'server-error':   (meta?.detail || 'The server rejected this file.'),
+        'bad-response':   'The server returned data we could not parse. This is a bug on our side. Please retry in a minute.',
+        'aborted':        'The analysis was cancelled.',
+    };
+
+    // Leave the progress bar visible at its last state so the user sees exactly where it stopped.
+    // Just paint it red and add the error card inline.
+    const bar = document.getElementById('progress-bar');
+    if (bar) { bar.style.background = 'var(--status-fail)'; }
+
+    // Build / replace error card inside the progress section
+    let card = document.getElementById('analysis-failure-card');
+    if (!card) {
+        card = document.createElement('div');
+        card.id = 'analysis-failure-card';
+        card.className = 'analysis-failure';
+        progressSection.appendChild(card);
+    }
+    card.innerHTML = `
+      <p class="failure-kicker">[ ${kind.toUpperCase().replace('-', ' ')} ]</p>
+      <h3 class="failure-title">${titles[kind] || 'Analysis failed'}</h3>
+      <p class="failure-body">${bodies[kind] || 'Something went wrong.'}</p>
+      ${file ? `<p class="failure-file">File: <strong>${escapeHtml(file.name)}</strong> (${fmtSize(file.size)})</p>` : ''}
+      ${meta?.status ? `<p class="failure-meta">HTTP ${meta.status}</p>` : ''}
+      <div class="failure-actions">
+        <button type="button" class="btn btn--solid" id="btn-retry-analysis">Try again</button>
+        <button type="button" class="btn btn--outline" id="btn-choose-another">Choose a different file</button>
+      </div>
+    `;
+    card.classList.remove('hidden');
+    progressSection.classList.remove('hidden');
+
+    // Wire the buttons
+    document.getElementById('btn-retry-analysis').addEventListener('click', () => {
+        if (lastFailedAnalysis?.file) {
+            card.remove();
+            if (bar) bar.style.background = '';
+            handleFile(lastFailedAnalysis.file);
+        }
+    });
+    document.getElementById('btn-choose-another').addEventListener('click', () => {
+        card.remove();
+        if (bar) bar.style.background = '';
+        progressSection.classList.add('hidden');
+        uploadZone.classList.remove('hidden');
+        retainLabel.classList.remove('hidden');
+        document.getElementById('analysis-mode').classList.remove('hidden');
+        document.getElementById('profile-selector').classList.remove('hidden');
+        fileInput.value = '';
+    });
+
+    // Also surface a toast for immediate visibility (short, non-blocking)
+    showToast(titles[kind] || 'Analysis failed', 'error', titles[kind] || 'Analysis Failed', 4000);
+}
+
+function escapeHtml(s) {
+    return String(s ?? '').replace(/[&<>"']/g, c => (
+        { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+    ));
 }
 
 function toDataItem([label, value, cls]) {
