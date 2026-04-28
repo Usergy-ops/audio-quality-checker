@@ -8,6 +8,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
@@ -103,6 +104,9 @@ async def key_info(api_key: str = ""):
 
 # ── Frontend Static Files ──
 FRONTEND_DIR = Path(__file__).resolve().parent.parent.parent / "frontend"
+
+# Mount /assets/* for brand kit images (favicon, mark, wordmark, etc.)
+app.mount("/assets", StaticFiles(directory=FRONTEND_DIR / "assets"), name="assets")
 
 
 @app.get("/")

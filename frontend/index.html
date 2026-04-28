@@ -3,29 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Audio Quality Checker — Free Analysis Tool | UsergyAI</title>
-    <meta name="description" content="Analyze any audio file in seconds. Get quality scores, signal metrics, language detection, and compliance reports. Free tool by UsergyAI.">
+    <title>Audio Quality Checker · UsergyAI</title>
+    <meta name="description" content="Upload any audio file. Get signal metrics, language detection, speaker count, MOS, noise classification, and compliance in seconds. Free tool from UsergyAI.">
     <meta name="keywords" content="audio quality checker, audio analyzer, SNR checker, clipping detection, language detection, UsergyAI">
     <meta name="author" content="UsergyAI">
     <meta name="robots" content="index, follow">
 
     <meta property="og:type" content="website">
-    <meta property="og:title" content="Audio Quality Checker — Free Analysis Tool">
-    <meta property="og:description" content="Upload any audio file and get a detailed quality report in seconds.">
-    <meta property="og:url" content="https://usergy.ai/tools/audio-quality-checker">
+    <meta property="og:title" content="Audio Quality Checker · UsergyAI">
+    <meta property="og:description" content="Upload any audio file. Get signal metrics, language detection, speaker count, MOS, noise classification, and compliance in seconds.">
+    <meta property="og:url" content="https://tools.usergy.ai/audio-checker">
     <meta property="og:site_name" content="UsergyAI">
+    <meta property="og:image" content="https://usergy.ai/og-image-1200x630.png">
 
-    <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="Audio Quality Checker — Free Analysis Tool">
-    <meta name="twitter:description" content="Upload any audio file and get a detailed quality report in seconds.">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Audio Quality Checker · UsergyAI">
+    <meta name="twitter:description" content="Upload any audio file. Get signal metrics, language detection, speaker count, MOS, noise classification, and compliance in seconds.">
     <meta name="twitter:site" content="@UsergyAI">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;450;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <link rel="canonical" href="https://usergy.ai/tools/audio-quality-checker">
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23111'/%3E%3Cpath d='M10 20V12M14 22V10M18 18V14M22 20V12' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
+    <link rel="canonical" href="https://tools.usergy.ai/audio-checker">
+    <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+    <meta name="theme-color" content="#F5F2E8">
     <script src="https://unpkg.com/wavesurfer.js@7"></script>
 </head>
 <body>
@@ -33,17 +37,14 @@
     <!-- Nav -->
     <nav class="nav">
         <div class="nav-inner">
-            <a href="/" class="nav-brand">
-                <svg class="nav-icon" width="24" height="24" viewBox="0 0 32 32" fill="none">
-                    <rect width="32" height="32" rx="8" fill="#111"/>
-                    <path d="M10 20V12M14 22V10M18 18V14M22 20V12" stroke="white" stroke-width="2" stroke-linecap="round"/>
-                </svg>
-                <span>Audio Quality Checker</span>
+            <a href="https://usergy.ai" class="nav-brand">
+                <img class="nav-icon" src="assets/mark-ember.svg" width="28" height="28" alt="UsergyAI">
+                <span class="nav-brand-title">UsergyAI <span class="nav-brand-sub">· Tools</span></span>
             </a>
             <div class="nav-links" id="nav-links">
                 <a href="#features">Features</a>
                 <a href="#how">How it works</a>
-                <a href="https://usergy.ai" target="_blank" class="nav-cta">UsergyAI</a>
+                <a href="https://usergy.ai" target="_blank" rel="noopener" class="nav-cta">usergy.ai ↗</a>
             </div>
             <button class="nav-toggle" id="nav-toggle" aria-label="Menu">
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -441,7 +442,8 @@
     <!-- Footer -->
     <footer class="footer">
         <div class="container footer-inner">
-            <p>Built by <a href="https://usergy.ai" target="_blank">UsergyAI</a></p>
+            <p class="footer-kicker">[ USERGYAI · TOOLS ]</p>
+            <p>Part of UsergyAI · <a href="https://usergy.ai">usergy.ai</a> · <a href="mailto:connect@usergy.ai">connect@usergy.ai</a></p>
             <p class="footer-small">Files are deleted after analysis unless you opt in to help improve our models.</p>
         </div>
     </footer>

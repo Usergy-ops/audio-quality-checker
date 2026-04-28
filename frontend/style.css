@@ -110,11 +110,25 @@ body {
     align-items: center;
     gap: 10px;
     text-decoration: none;
-    color: #111111;
+    color: var(--ground-green);
     font-weight: 600;
     font-size: 15px;
     font-family: var(--font-display);
     letter-spacing: -0.01em;
+}
+
+.nav-brand-title {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+}
+
+.nav-brand-sub {
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    color: var(--ember-ink);
 }
 
 .nav-icon { flex-shrink: 0; }
@@ -988,25 +1002,39 @@ body {
 /* ── Footer ──────────────────────────────────────── */
 
 .footer {
-    padding: 40px 0;
+    padding: 56px 0 48px;
     border-top: 1px solid var(--border);
+    background: var(--paper);
 }
 
 .footer-inner {
     text-align: center;
 }
 
-.footer a {
-    color: var(--accent);
-    text-decoration: none;
+.footer-kicker {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    color: var(--ember-ink);
+    margin-bottom: 16px;
 }
 
-.footer a:hover { text-decoration: underline; }
+.footer a {
+    color: var(--ground-green);
+    text-decoration: underline;
+    text-decoration-color: var(--ember);
+    text-decoration-thickness: 1.5px;
+    text-underline-offset: 3px;
+}
+
+.footer a:hover { color: var(--ember-ink); }
 
 .footer-small {
-    margin-top: 8px;
+    margin-top: 12px;
     font-size: 12px;
-    color: var(--text-3);
+    color: var(--slate);
+    font-family: var(--font-mono);
+    letter-spacing: 0.02em;
 }
 
 /* ── Floating Tooltip ─────────────────────────────── */

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024" role="img" aria-label="UsergyAI mark">
+  <title>UsergyAI mark</title>
+  <desc>The [ ] bracket mark for UsergyAI. Ember on transparent background.</desc>
+  <g fill="#E8552B" fill-rule="evenodd">
+    <!-- Left bracket: C-shape opening to the right -->
+    <path d="M 220 220 L 388 220 L 388 307 L 307 307 L 307 716 L 388 716 L 388 803 L 220 803 Z"/>
+    <!-- Right bracket: mirror C-shape opening to the left -->
+    <path d="M 635 220 L 803 220 L 803 803 L 635 803 L 635 716 L 716 716 L 716 307 L 635 307 Z"/>
+  </g>
+</svg>
