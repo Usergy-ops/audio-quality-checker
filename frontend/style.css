@@ -58,6 +58,34 @@
     --red-bg:       var(--status-fail-bg);
 }
 
+/* ── Accessibility ─────────────────────────────── */
+
+/* Visible focus ring (ember, offset for contrast on paper bg) */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+.upload-zone:focus-visible,
+.mode-btn:focus-visible,
+.btn:focus-visible,
+.section-nav-btn:focus-visible {
+    outline: 2px solid var(--ember);
+    outline-offset: 3px;
+    border-radius: var(--radius);
+}
+
+/* Honor prefers-reduced-motion — turn off all decorative motion */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+    .reveal { opacity: 1 !important; transform: none !important; }
+    .score-ring-fill { transition: none !important; }
+    .breakdown-fill { transition: none !important; }
+}
+
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; scroll-margin-top: 100px; }
 
@@ -1421,7 +1449,7 @@ body {
     font-weight: 500;
     transition: all 0.2s;
     font-family: var(--font);
-    min-height: 36px;
+    min-height: 44px;
 }
 .mode-btn.active {
     background: var(--ground-green);
