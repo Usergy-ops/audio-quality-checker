@@ -26,7 +26,9 @@ router = APIRouter()
 limiter = Limiter(key_func=get_remote_address)
 
 # Dedicated thread pool for analysis (prevents exhausting default pool)
-_analysis_pool = ThreadPoolExecutor(max_workers=4, thread_name_prefix="analysis")
+# Reduced from 4 → 2 to avoid native malloc corruption under concurrent C-extension
+# calls (torch / pyannote / matplotlib sharing arenas across too many threads).
+_analysis_pool = ThreadPoolExecutor(max_workers=2, thread_name_prefix="analysis")
 
 # Server-side analysis timeout (seconds)
 ANALYSIS_TIMEOUT = 600  # 10 minutes — large files on CPU need time

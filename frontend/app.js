@@ -1027,7 +1027,9 @@ function downloadPdf() {
     if (!currentResult) return;
     const r = currentResult;
 
-    // Build a standalone HTML report
+    // Build a standalone HTML report on-brand with UsergyAI Brand Foundation v2.
+    // Root & Ember palette. Space Grotesk + Inter + JetBrains Mono. No gradients.
+    // Mono kickers. Zero-padded numbers. Solid fills only.
     const fi = r.file_info || {};
     const sig = r.signal_analysis || {};
     const ai = r.ai_analysis || {};
@@ -1036,132 +1038,317 @@ function downloadPdf() {
     const sq = ai.speech_quality || null;
     const viz = r.visualizations || {};
 
-    const scoreColor = q.score >= 80 ? '#27ae60' : q.score >= 60 ? '#F5A623' : '#E74C3C';
+    const gradeColor = (score) =>
+        score >= 80 ? 'var(--status-pass)'
+      : score >= 60 ? 'var(--status-warn)'
+      : 'var(--status-fail)';
+
     const mosHtml = sq ? `
-        <div class="section">
-            <h2>Speech Quality (NISQA MOS)</h2>
-            <div style="display:flex;align-items:center;gap:20px;margin-bottom:12px">
-                <div style="font-size:2.5rem;font-weight:700;color:${sq.mos >= 3.5 ? '#27ae60' : sq.mos >= 2.5 ? '#F5A623' : '#E74C3C'}">${sq.mos.toFixed(1)}<span style="font-size:1rem;color:#888">/5.0</span></div>
-                <div><strong>${sq.mos_rating}</strong><br><span style="color:#888;font-size:0.85rem">Industry-standard MOS score</span></div>
+        <section class="block">
+          <p class="kicker">[ SPEECH QUALITY · NISQA MOS ]</p>
+          <div class="kicker-rule"></div>
+          <div class="mos-row">
+            <div class="mos-big" style="color:${gradeColor(sq.mos * 20)}">${sq.mos.toFixed(1)}<span class="mos-of">/ 5.0</span></div>
+            <div class="mos-meta">
+              <strong>${sq.mos_rating}</strong><br>
+              <span class="mos-sub">Industry-standard Mean Opinion Score</span>
             </div>
-            <table><tr><th>Metric</th><th>Score</th></tr>
-                <tr><td>Noisiness</td><td>${sq.noisiness.toFixed(1)}/5.0</td></tr>
-                <tr><td>Coloration</td><td>${sq.coloration.toFixed(1)}/5.0</td></tr>
-                <tr><td>Discontinuity</td><td>${sq.discontinuity.toFixed(1)}/5.0</td></tr>
-                <tr><td>Loudness</td><td>${sq.loudness.toFixed(1)}/5.0</td></tr>
-            </table>
-        </div>` : '';
+          </div>
+          <table class="spec">
+            <tr><th>Component</th><th>Score</th></tr>
+            <tr><td>Noisiness</td><td>${sq.noisiness.toFixed(1)} / 5.0</td></tr>
+            <tr><td>Coloration</td><td>${sq.coloration.toFixed(1)} / 5.0</td></tr>
+            <tr><td>Discontinuity</td><td>${sq.discontinuity.toFixed(1)} / 5.0</td></tr>
+            <tr><td>Loudness</td><td>${sq.loudness.toFixed(1)} / 5.0</td></tr>
+          </table>
+        </section>` : '';
 
-    const breakdownHtml = (q.breakdown || []).map(b =>
-        `<tr><td>${b.component}</td><td>${b.detail}</td><td style="color:${b.score >= 70 ? '#27ae60' : b.score >= 40 ? '#F5A623' : '#E74C3C'}">${b.score}/100</td><td>${b.weight * 100}%</td></tr>`
-    ).join('');
+    const breakdownHtml = (q.breakdown || []).map((b, i) => `
+        <tr>
+          <td><span class="num">[${String(i + 1).padStart(2, '0')}]</span> ${b.component}</td>
+          <td class="mono">${b.detail}</td>
+          <td class="mono" style="color:${gradeColor(b.score)}">${b.score} / 100</td>
+          <td class="mono">${Math.round(b.weight * 100)}%</td>
+        </tr>`).join('');
 
-    const compHtml = (comp.checks || []).map(c => {
-        const badgeClass = c.status === 'pass' ? 'badge-pass' : c.status === 'warn' ? 'badge-warn' : 'badge-fail';
-        const badgeText = c.status === 'pass' ? 'PASS' : c.status === 'warn' ? 'WARN' : 'FAIL';
-        return `<tr><td>${c.metric}</td><td>${c.value}</td><td>${c.threshold}</td><td><span class="badge ${badgeClass}">${badgeText}</span> ${c.message}</td></tr>`;
-    }).join('');
+    const badgeClass = (status) =>
+        status === 'pass' ? 'badge badge-pass'
+      : status === 'warn' ? 'badge badge-warn'
+      : 'badge badge-fail';
 
-    const vizHtml = ['waveform','spectrogram','loudness','speakers'].map(k =>
-        viz[k] ? `<div><img src="data:image/png;base64,${viz[k]}" class="viz-img" alt="${k}"></div>` : ''
-    ).join('');
+    const compHtml = (comp.checks || []).map(c => `
+        <tr>
+          <td>${c.metric}</td>
+          <td class="mono">${c.value}</td>
+          <td class="mono">${c.threshold}</td>
+          <td><span class="${badgeClass(c.status)}">${c.status.toUpperCase()}</span> <span class="comp-msg">${c.message}</span></td>
+        </tr>`).join('');
 
-    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
-<title>Audio Quality Report - ${fi.filename || 'Unknown'}</title>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    const vizHtml = ['waveform', 'spectrogram', 'loudness', 'speakers']
+        .filter(k => viz[k])
+        .map(k => `<figure class="viz-figure"><figcaption class="kicker">[ ${k.toUpperCase()} ]</figcaption><img src="data:image/png;base64,${viz[k]}" alt="${k}"></figure>`)
+        .join('');
+
+    const now = new Date();
+    const date = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    const time = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+    // Base64-encoded embedded brand mark so the report is fully offline-safe.
+    // Source: assets/mark-ember.svg (shipped with the tool).
+    const markSvg = `<svg viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg" width="36" height="36" aria-hidden="true"><rect width="128" height="128" rx="20" fill="#E8552B"/><path d="M40 34v42c0 13.25 10.75 24 24 24s24-10.75 24-24V34" fill="none" stroke="#F5F2E8" stroke-width="10" stroke-linecap="round"/></svg>`;
+
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Audio Quality Report · ${(fi.filename || 'Untitled').replace(/</g, '&lt;')} · UsergyAI</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root { --accent: #00897B; --accent-light: #e0f2f1; --green: #10b981; --orange: #f59e0b; --red: #ef4444; }
-  body { font-family: 'Inter', -apple-system, system-ui, sans-serif; max-width: 900px; margin: 0 auto; padding: 32px 24px; color: #1a1a1a; font-size: 14px; line-height: 1.6; background: #fff; }
-  h1 { font-family: 'Space Grotesk', sans-serif; color: var(--accent); font-size: 1.75rem; font-weight: 700; margin-bottom: 4px; border: none; }
-  .subtitle { color: #666; font-size: 0.85rem; margin-bottom: 32px; }
-  h2 { font-family: 'Space Grotesk', sans-serif; color: #222; margin-top: 28px; margin-bottom: 12px; font-size: 1.1rem; font-weight: 600; padding-left: 12px; border-left: 3px solid var(--accent); }
-  .section { margin-bottom: 24px; page-break-inside: avoid; }
-  table { width: 100%; border-collapse: collapse; margin: 8px 0; }
-  th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #eee; font-size: 0.9rem; }
-  th { background: #f8f9fa; font-weight: 600; color: #444; }
-  tr:hover td { background: #fafafa; }
-  .score-box { display: flex; align-items: center; gap: 20px; padding: 20px; background: linear-gradient(135deg, #f0fdf9 0%, #e0f7f4 100%); border-radius: 12px; margin: 12px 0; }
-  .score-num { font-family: 'Space Grotesk', sans-serif; font-size: 3.5rem; font-weight: 700; line-height: 1; }
-  .score-grade { font-size: 1.5rem; font-weight: 600; }
-  .score-summary { color: #555; font-size: 0.9rem; margin-top: 4px; }
-  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
-  .badge-pass { background: #d1fae5; color: #065f46; }
-  .badge-warn { background: #fef3c7; color: #92400e; }
-  .badge-fail { background: #fee2e2; color: #991b1b; }
-  .meta { color: #888; font-size: 0.8rem; }
-  .viz-img { width: 100%; border-radius: 8px; margin: 8px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-  hr { border: none; border-top: 1px solid #eee; margin: 32px 0 16px; }
-  .footer { text-align: center; color: #999; font-size: 0.8rem; }
-  .footer a { color: var(--accent); text-decoration: none; }
-  @media print { body { padding: 0; } .no-print { display: none; } }
-</style></head><body>
-<h1>Audio Quality Report</h1>
-<p class="subtitle">Generated on ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} at ${new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</p>
+  /* UsergyAI Brand Foundation v2 — Root & Ember palette. No gradients. */
+  :root {
+    --paper:        #F5F2E8;
+    --ground-green: #0D1F1C;
+    --ember:        #E8552B;
+    --ember-ink:    #C43F19;
+    --moss:         #2F4A3F;
+    --clay:         #C8B8A0;
+    --slate:        #5B6B66;
+    --paper-deep:   #E8E4D5;
+    --border:       #D8D3C3;
+    --status-pass:     #2F4A3F;
+    --status-pass-bg:  #E5ECE7;
+    --status-warn:     #C77A2B;
+    --status-warn-bg:  #FAEEDA;
+    --status-fail:     #C43F19;
+    --status-fail-bg:  #FCE8E1;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, system-ui, sans-serif;
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 48px 40px 64px;
+    color: var(--ground-green);
+    font-size: 14px;
+    line-height: 1.6;
+    background: var(--paper);
+  }
+  header.report-head { margin-bottom: 40px; }
+  header.report-head .brand-row {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 28px;
+  }
+  header.report-head .brand-mark { flex-shrink: 0; }
+  header.report-head .brand-name {
+    font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 18px;
+    color: var(--ground-green); letter-spacing: -0.01em;
+  }
+  header.report-head .brand-name .tool {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-weight: 500; font-size: 12px; color: var(--ember-ink);
+    letter-spacing: 0.04em; margin-left: 8px;
+  }
+  header.report-head h1 {
+    font-family: 'Space Grotesk', sans-serif; color: var(--ground-green);
+    font-size: 36px; font-weight: 700; letter-spacing: -0.025em; line-height: 1.1;
+    margin: 0 0 8px;
+  }
+  header.report-head h1 .ember { color: var(--ember); }
+  header.report-head .subtitle {
+    color: var(--slate); font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 12px; letter-spacing: 0.06em;
+  }
+  .kicker {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.18em;
+    color: var(--ember-ink); margin: 0 0 8px;
+  }
+  .kicker-rule { width: 48px; height: 2px; background: var(--ember); margin-bottom: 20px; }
+  .block { margin-bottom: 36px; page-break-inside: avoid; }
+  table.spec {
+    width: 100%; border-collapse: collapse;
+    background: var(--paper-deep); border-radius: 4px; overflow: hidden;
+  }
+  table.spec th, table.spec td {
+    padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  table.spec tr:last-child td { border-bottom: none; }
+  table.spec th {
+    background: var(--paper); font-weight: 600; color: var(--ground-green);
+    font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px;
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+  .num { font-family: 'JetBrains Mono', ui-monospace, monospace; color: var(--ember-ink); font-weight: 600; letter-spacing: 0.04em; margin-right: 6px; }
 
-<div class="section">
-  <h2>File Information</h2>
-  <table><tr><th>Property</th><th>Value</th></tr>
-    <tr><td>Filename</td><td>${fi.filename || '-'}</td></tr>
-    <tr><td>Duration</td><td>${fi.duration_formatted || '-'}</td></tr>
-    <tr><td>Format</td><td>${fi.format || '-'} / ${fi.codec || '-'}</td></tr>
-    <tr><td>Sample Rate</td><td>${fi.sample_rate ? fi.sample_rate.toLocaleString() + ' Hz' : '-'}</td></tr>
-    <tr><td>Bit Depth</td><td>${fi.bit_depth ? fi.bit_depth + '-bit' : 'N/A'}</td></tr>
-    <tr><td>Channels</td><td>${fi.channel_layout || fi.channels || '-'}</td></tr>
-    <tr><td>File Size</td><td>${fi.file_size_formatted || '-'}</td></tr>
-  </table>
-</div>
+  /* Score block — the dominant brand moment (solid fills only) */
+  .score-block {
+    border: 1.5px solid var(--ground-green); border-radius: 4px; padding: 32px 28px;
+    background: var(--paper); margin-bottom: 20px;
+    display: flex; align-items: center; gap: 36px; flex-wrap: wrap;
+    position: relative;
+  }
+  .score-block::before, .score-block::after {
+    content: ""; position: absolute; width: 14px; height: 14px;
+  }
+  .score-block::before { top: -2px; left: -2px; border-top: 2.5px solid var(--ember); border-left: 2.5px solid var(--ember); }
+  .score-block::after  { bottom: -2px; right: -2px; border-bottom: 2.5px solid var(--ember); border-right: 2.5px solid var(--ember); }
+  .score-num {
+    font-family: 'Space Grotesk', sans-serif; font-size: 76px; font-weight: 700;
+    line-height: 1; letter-spacing: -0.04em;
+  }
+  .score-num .score-of {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 14px; color: var(--slate); margin-left: 8px; font-weight: 500;
+    letter-spacing: 0.04em;
+  }
+  .score-grade { font-family: 'Space Grotesk', sans-serif; font-size: 42px; font-weight: 700; line-height: 1; letter-spacing: -0.03em; color: var(--ember); margin-bottom: 6px; }
+  .score-summary { color: var(--slate); font-size: 14px; max-width: 280px; }
 
-<div class="section">
-  <h2>Quality Score</h2>
-  <div class="score-box">
-    <div class="score-num" style="color:${scoreColor}">${q.score || 0}</div>
+  /* MOS inline block */
+  .mos-row { display: flex; align-items: center; gap: 28px; margin-bottom: 16px; flex-wrap: wrap; }
+  .mos-big {
+    font-family: 'Space Grotesk', sans-serif; font-size: 48px; font-weight: 700;
+    line-height: 1; letter-spacing: -0.03em;
+  }
+  .mos-big .mos-of { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 14px; color: var(--slate); margin-left: 6px; font-weight: 500; }
+  .mos-meta strong { font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 600; color: var(--ground-green); }
+  .mos-sub { color: var(--slate); font-size: 12px; font-family: 'JetBrains Mono', ui-monospace, monospace; letter-spacing: 0.02em; }
+
+  /* Status badges (brand-native instead of bootstrap red/yellow/green) */
+  .badge {
+    display: inline-block; padding: 2px 10px; border-radius: 100px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+    vertical-align: middle;
+  }
+  .badge-pass { background: var(--status-pass-bg); color: var(--status-pass); }
+  .badge-warn { background: var(--status-warn-bg); color: var(--status-warn); }
+  .badge-fail { background: var(--status-fail-bg); color: var(--status-fail); }
+  .comp-msg { color: var(--slate); font-size: 12px; margin-left: 6px; }
+
+  /* Visualization figures */
+  .viz-figure { margin: 20px 0; }
+  .viz-figure figcaption { margin-bottom: 8px; }
+  .viz-figure img {
+    width: 100%; border: 1px solid var(--border); border-radius: 4px;
+    background: var(--paper);
+  }
+
+  /* Footer */
+  hr { border: none; border-top: 1px solid var(--border); margin: 48px 0 20px; }
+  footer {
+    text-align: center; color: var(--slate); font-size: 12px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace; letter-spacing: 0.04em;
+  }
+  footer a {
+    color: var(--ground-green); text-decoration: underline;
+    text-decoration-color: var(--ember); text-underline-offset: 3px; text-decoration-thickness: 1.5px;
+  }
+
+  @media print {
+    body { padding: 24px; background: var(--paper); }
+    .no-print { display: none; }
+    .block { page-break-inside: avoid; }
+  }
+  @page { size: A4; margin: 18mm 16mm; }
+</style>
+</head>
+<body>
+
+<header class="report-head">
+  <div class="brand-row">
+    <span class="brand-mark">${markSvg}</span>
+    <span class="brand-name">UsergyAI<span class="tool">· Audio Quality Checker</span></span>
+  </div>
+  <p class="kicker">[ AUDIO QUALITY REPORT ]</p>
+  <div class="kicker-rule"></div>
+  <h1>${(fi.filename || 'Untitled').replace(/</g, '&lt;').replace(/\.[^.]+$/, '')}</h1>
+  <p class="subtitle">GENERATED · ${date.toUpperCase()} · ${time}</p>
+</header>
+
+<section class="block">
+  <p class="kicker">[ QUALITY SCORE ]</p>
+  <div class="kicker-rule"></div>
+  <div class="score-block">
+    <div class="score-num" style="color:${gradeColor(q.score)}">${q.score ?? 0}<span class="score-of">/ 100</span></div>
     <div>
-      <div class="score-grade" style="color:${scoreColor}">${q.grade || '-'}</div>
+      <div class="score-grade">${q.grade || '-'}</div>
       <div class="score-summary">${q.summary || ''}</div>
     </div>
   </div>
-</div>
+</section>
+
+<section class="block">
+  <p class="kicker">[ FILE INFO ]</p>
+  <div class="kicker-rule"></div>
+  <table class="spec">
+    <tr><th>Property</th><th>Value</th></tr>
+    <tr><td>Filename</td><td class="mono">${fi.filename || '-'}</td></tr>
+    <tr><td>Duration</td><td class="mono">${fi.duration_formatted || '-'}</td></tr>
+    <tr><td>Format / codec</td><td class="mono">${(fi.format || '-')} · ${(fi.codec || '-')}</td></tr>
+    <tr><td>Sample rate</td><td class="mono">${fi.sample_rate ? fi.sample_rate.toLocaleString() + ' Hz' : '-'}</td></tr>
+    <tr><td>Bit depth</td><td class="mono">${fi.bit_depth ? fi.bit_depth + '-bit' : 'N/A'}</td></tr>
+    <tr><td>Channels</td><td class="mono">${fi.channel_layout || fi.channels || '-'}</td></tr>
+    <tr><td>File size</td><td class="mono">${fi.file_size_formatted || '-'}</td></tr>
+  </table>
+</section>
 
 ${mosHtml}
 
-<div class="section">
-  <h2>Signal Analysis</h2>
-  <table><tr><th>Metric</th><th>Value</th></tr>
-    <tr><td>Peak Amplitude</td><td>${sig.peak_amplitude_db != null ? sig.peak_amplitude_db.toFixed(1) + ' dB' : '-'}</td></tr>
-    <tr><td>RMS Level</td><td>${sig.rms_level_db != null ? sig.rms_level_db.toFixed(1) + ' dB' : '-'}</td></tr>
-    <tr><td>SNR</td><td>${sig.snr_db != null ? sig.snr_db.toFixed(1) + ' dB' : '-'}</td></tr>
-    <tr><td>Dynamic Range</td><td>${sig.dynamic_range_db != null ? sig.dynamic_range_db.toFixed(1) + ' dB' : '-'}</td></tr>
-    <tr><td>DC Offset</td><td>${sig.dc_offset != null ? sig.dc_offset.toFixed(6) : '-'}</td></tr>
-    <tr><td>Clipping</td><td>${sig.clipping ? sig.clipping.percentage.toFixed(4) + '%' : 'None'}</td></tr>
-    <tr><td>Silence</td><td>${sig.silence ? sig.silence.percentage.toFixed(1) + '%' : '-'}</td></tr>
+<section class="block">
+  <p class="kicker">[ SIGNAL ANALYSIS ]</p>
+  <div class="kicker-rule"></div>
+  <table class="spec">
+    <tr><th>Metric</th><th>Value</th></tr>
+    <tr><td>Peak amplitude</td><td class="mono">${sig.peak_amplitude_db != null ? sig.peak_amplitude_db.toFixed(1) + ' dB' : '-'}</td></tr>
+    <tr><td>RMS level</td><td class="mono">${sig.rms_level_db != null ? sig.rms_level_db.toFixed(1) + ' dB' : '-'}</td></tr>
+    <tr><td>SNR</td><td class="mono">${sig.snr_db != null ? sig.snr_db.toFixed(1) + ' dB' : '-'}</td></tr>
+    <tr><td>Dynamic range</td><td class="mono">${sig.dynamic_range_db != null ? sig.dynamic_range_db.toFixed(1) + ' dB' : '-'}</td></tr>
+    <tr><td>DC offset</td><td class="mono">${sig.dc_offset != null ? sig.dc_offset.toFixed(6) : '-'}</td></tr>
+    <tr><td>Clipping</td><td class="mono">${sig.clipping ? sig.clipping.percentage.toFixed(4) + '%' : 'None'}</td></tr>
+    <tr><td>Silence</td><td class="mono">${sig.silence ? sig.silence.percentage.toFixed(1) + '%' : '-'}</td></tr>
   </table>
-</div>
+</section>
 
-<div class="section">
-  <h2>AI Analysis</h2>
-  <table><tr><th>Metric</th><th>Value</th></tr>
-    ${ai.language ? `<tr><td>Language</td><td>${ai.language.name} (${ai.language.confidence}%)</td></tr>` : ''}
-    ${ai.speech_activity ? `<tr><td>Speech</td><td>${ai.speech_activity.speech_percentage.toFixed(1)}%</td></tr>` : ''}
-    ${ai.speakers ? `<tr><td>Speakers</td><td>${ai.speakers.count}</td></tr>` : ''}
+<section class="block">
+  <p class="kicker">[ AI ANALYSIS ]</p>
+  <div class="kicker-rule"></div>
+  <table class="spec">
+    <tr><th>Metric</th><th>Value</th></tr>
+    ${ai.language      ? `<tr><td>Language</td><td class="mono">${ai.language.name} · ${ai.language.confidence}% confidence</td></tr>` : ''}
+    ${ai.speech_activity ? `<tr><td>Speech activity</td><td class="mono">${ai.speech_activity.speech_percentage.toFixed(1)}%</td></tr>` : ''}
+    ${ai.speakers      ? `<tr><td>Speakers</td><td class="mono">${ai.speakers.count}</td></tr>` : ''}
+    ${ai.noise_classification ? `<tr><td>Primary noise type</td><td class="mono">${ai.noise_classification.primary_label}</td></tr>` : ''}
+    ${ai.reverb && ai.reverb.rt60_seconds != null ? `<tr><td>Reverb (RT60)</td><td class="mono">${ai.reverb.rt60_seconds.toFixed(2)}s · ${ai.reverb.environment || ''}</td></tr>` : ''}
+    ${ai.emotion       ? `<tr><td>Emotion / tone</td><td class="mono">${ai.emotion.primary_tone}</td></tr>` : ''}
   </table>
-</div>
+</section>
 
-${breakdownHtml ? `<div class="section"><h2>Quality Breakdown</h2><table><tr><th>Component</th><th>Detail</th><th>Score</th><th>Weight</th></tr>${breakdownHtml}</table></div>` : ''}
+${breakdownHtml ? `<section class="block"><p class="kicker">[ QUALITY BREAKDOWN ]</p><div class="kicker-rule"></div><table class="spec"><tr><th>Component</th><th>Detail</th><th>Score</th><th>Weight</th></tr>${breakdownHtml}</table></section>` : ''}
 
-${compHtml ? `<div class="section"><h2>Compliance</h2><table><tr><th>Check</th><th>Value</th><th>Threshold</th><th>Result</th></tr>${compHtml}</table></div>` : ''}
+${compHtml ? `<section class="block"><p class="kicker">[ COMPLIANCE ]</p><div class="kicker-rule"></div><table class="spec"><tr><th>Check</th><th>Value</th><th>Threshold</th><th>Result</th></tr>${compHtml}</table></section>` : ''}
 
-${vizHtml ? `<div class="section"><h2>Visualizations</h2>${vizHtml}</div>` : ''}
+${vizHtml ? `<section class="block"><p class="kicker">[ VISUALIZATIONS ]</p><div class="kicker-rule"></div>${vizHtml}</section>` : ''}
 
 <hr>
-<p class="footer">Generated by <a href="https://usergy.ai">UsergyAI Audio Quality Checker</a></p>
-</body></html>`;
+<footer>
+  Generated by <a href="https://tools.usergy.ai/audio-checker">UsergyAI Audio Quality Checker</a> ·
+  Part of <a href="https://usergy.ai">usergy.ai</a> ·
+  The [human] data layer for AI.
+</footer>
+
+</body>
+</html>`;
 
     // Auto-download as HTML file
     const blob = new Blob([html], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `Audio-Report-${(fi.filename || 'Unknown').replace(/\.[^.]+$/, '')}.html`;
+    const safeName = (fi.filename || 'Untitled').replace(/\.[^.]+$/, '').replace(/[^A-Za-z0-9_.-]+/g, '-');
+    a.download = `UsergyAI-Audio-Report-${safeName}.html`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
