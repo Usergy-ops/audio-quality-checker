@@ -370,10 +370,10 @@ function renderScore(q) {
 
     // Ring color by score
     let color;
-    if (score >= 80) color = '#2e7d32';
-    else if (score >= 70) color = '#00897B';
-    else if (score >= 60) color = '#e65100';
-    else color = '#c62828';
+    if (score >= 80) color = '#2F4A3F';
+    else if (score >= 70) color = '#2F4A3F';
+    else if (score >= 60) color = '#C77A2B';
+    else color = '#C43F19';
 
     const ring = document.getElementById('score-ring-fill');
     ring.style.stroke = color;
@@ -518,11 +518,11 @@ function renderMOS(a) {
     const mos = sq.mos;
 
     // Color based on MOS
-    let color = '#E74C3C'; // red
-    if (mos >= 4.0) color = '#27ae60';
-    else if (mos >= 3.5) color = '#00897B';
-    else if (mos >= 3.0) color = '#F5A623';
-    else if (mos >= 2.5) color = '#e67e22';
+    let color = '#C43F19'; // ember-ink (fail)
+    if (mos >= 4.0) color = '#2F4A3F';
+    else if (mos >= 3.5) color = '#2F4A3F';
+    else if (mos >= 3.0) color = '#C77A2B';
+    else if (mos >= 2.5) color = '#C77A2B';
 
     const subs = [
         ['Noisiness', sq.noisiness, 'How clean the signal is (5 = no noise)'],
@@ -532,10 +532,10 @@ function renderMOS(a) {
     ];
 
     function subColor(v) {
-        if (v >= 4.0) return '#27ae60';
-        if (v >= 3.0) return '#00897B';
-        if (v >= 2.5) return '#F5A623';
-        return '#E74C3C';
+        if (v >= 4.0) return '#2F4A3F';
+        if (v >= 3.0) return '#2F4A3F';
+        if (v >= 2.5) return '#C77A2B';
+        return '#C43F19';
     }
 
     const barsHtml = subs.map(([label, val, tip]) => {
@@ -720,8 +720,8 @@ function initWaveform() {
 
     wavesurferInstance = WaveSurfer.create({
         container: '#waveform-container',
-        waveColor: isDark ? '#4a9d8f' : '#00897B',
-        progressColor: isDark ? '#80cbc4' : '#26a69a',
+        waveColor: isDark ? '#C8B8A0' : '#E8552B',
+        progressColor: isDark ? '#F5F2E8' : '#0D1F1C',
         cursorColor: isDark ? '#fff' : '#333',
         barWidth: 2,
         barGap: 1,
