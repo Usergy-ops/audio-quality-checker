@@ -587,7 +587,7 @@ function renderNoise(a) {
         html += '<div style="margin-bottom:12px">';
         nc.noise_types.forEach(nt => {
             const barWidth = Math.max(nt.confidence, 5);
-            const barColor = nt.confidence >= 70 ? 'var(--accent)' : nt.confidence >= 40 ? '#F5A623' : 'var(--text-3)';
+            const barColor = nt.confidence >= 70 ? 'var(--ember)' : nt.confidence >= 40 ? '#C77A2B' : 'var(--slate)';
             html += `<div style="margin-bottom:8px">
                 <div style="display:flex;justify-content:space-between;font-size:0.85rem;margin-bottom:3px">
                     <span>${nt.icon} ${nt.label}</span>
@@ -790,7 +790,7 @@ function renderReverb(a) {
     };
     const icon = envIcons[rv.environment] || '🔊';
 
-    const scoreColor = rv.reverb_score < 20 ? '#27ae60' : rv.reverb_score < 50 ? '#F5A623' : '#E74C3C';
+    const scoreColor = rv.reverb_score < 20 ? '#2F4A3F' : rv.reverb_score < 50 ? '#C77A2B' : '#C43F19';
 
     let html = `<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
         <span style="font-size:2rem">${icon}</span>
@@ -1729,11 +1729,11 @@ function showBatchResults(data) {
                 <div class="batch-stat-label">Files</div>
             </div>
             <div class="batch-stat">
-                <div class="batch-stat-value" style="color:#27ae60">${s.success}</div>
+                <div class="batch-stat-value" style="color:#2F4A3F">${s.success}</div>
                 <div class="batch-stat-label">Success</div>
             </div>
             <div class="batch-stat">
-                <div class="batch-stat-value" style="color:${s.failed > 0 ? '#E74C3C' : '#27ae60'}">${s.failed}</div>
+                <div class="batch-stat-value" style="color:${s.failed > 0 ? '#C43F19' : '#2F4A3F'}">${s.failed}</div>
                 <div class="batch-stat-label">Failed</div>
             </div>
             <div class="batch-stat">
@@ -1754,7 +1754,7 @@ function showBatchResults(data) {
         <thead><tr><th>#</th><th>Filename</th><th>Duration</th><th>Score</th><th>Grade</th><th>MOS</th><th>Language</th><th>Compliance</th><th>Time</th></tr></thead><tbody>`;
 
     files.forEach((f, i) => {
-        const scoreColor = f.score >= 80 ? '#27ae60' : f.score >= 60 ? '#F5A623' : '#E74C3C';
+        const scoreColor = f.score >= 80 ? '#2F4A3F' : f.score >= 60 ? '#C77A2B' : '#C43F19';
         const compIcon = f.compliance === 'pass' ? '\u2705' : f.compliance === 'warn' ? '\u26A0\uFE0F' : '\u274C';
         tableHtml += `<tr>
             <td>${i+1}</td>
