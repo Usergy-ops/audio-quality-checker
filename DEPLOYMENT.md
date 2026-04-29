@@ -1,6 +1,6 @@
 # Audio Quality Checker — Deployment Documentation
 
-**Last Updated:** 2026-04-09
+**Last Updated:** 2026-04-28
 **Version:** 4.6.0
 **Status:** ✅ PRODUCTION LIVE
 
@@ -143,7 +143,17 @@ Group=ubuntu
 WorkingDirectory=/home/ubuntu/.openclaw/workspace/tools/audio-quality-checker/backend
 Environment="PATH=/home/ubuntu/.openclaw/workspace/tools/audio-quality-checker/backend/venv/bin:/usr/local/bin:/usr/bin:/bin"
 Environment="HF_TOKEN=<your-huggingface-token>"
+# Native malloc + thread caps (added 2026-04-28)
+Environment="MALLOC_ARENA_MAX=2"
+Environment="OMP_NUM_THREADS=2"
+Environment="MKL_NUM_THREADS=2"
+Environment="OPENBLAS_NUM_THREADS=2"
+Environment="NUMEXPR_NUM_THREADS=2"
 ExecStart=/home/ubuntu/.openclaw/workspace/tools/audio-quality-checker/backend/venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000
+# Memory guardrails
+MemoryHigh=10G
+MemoryMax=12G
+TimeoutStopSec=120
 Restart=always
 RestartSec=3
 
@@ -166,7 +176,7 @@ WantedBy=multi-user.target
 ### Monitor Script Features
 - Checks if service is running → restarts if not
 - Checks health endpoint → restarts if not responding
-- Monitors memory usage → restarts if > 2GB
+- Monitors memory usage → restarts if > 10 GB sustained for 2 consecutive checks AND no active connections on :8000
 - Logs all checks to `/var/log/audio-checker-monitor.log`
 
 ---
@@ -305,6 +315,7 @@ sudo systemctl restart audio-checker
 
 | Date | Version | Changes |
 |------|---------|---------|
+| 2026-04-28 | 4.6.0 | UsergyAI rebrand (Root & Ember); monitor threshold raised to 10 GB with in-flight guard; MALLOC_ARENA_MAX + thread caps; PDF report rebranded; CF unproxy on tools.usergy.ai |
 | 2026-04-09 | 4.6.0 | Production deployment, SSL, monitoring |
 | 2026-04-09 | 4.5.0 | Bug fixes, batch mode |
 | 2026-04-09 | 4.4.0 | Quick/Deep analysis modes |
@@ -366,3 +377,23 @@ sudo cp /etc/nginx/sites-available/tools.usergy.ai ~/backup/
 - **Repository:** https://github.com/Usergy-ops/audio-quality-checker
 - **Live Site:** https://tools.usergy.ai/audio-checker
 - **Owner:** Swaroop (swaroop@usergy.ai)
+
+---
+
+## 2026-04-28 Session Docs
+
+For the full story of today's UI rebrand, bug fix pack, and infrastructure
+hardening, see:
+
+`/home/ubuntu/.openclaw/workspace/projects/audio-checker-rebrand-2026-04-28/`
+
+Contains:
+- `SESSION-SUMMARY.md` — the whole day
+- `COMMITS.md` — 14 commits with detail
+- `REBRAND.md` — UI/UX before/after
+- `FIX-PACK.md` — the 2.5-min bug investigation + fix
+- `BRAND-PDF-REPORT.md` — downloadable report template rewrite
+- `MALLOC-MITIGATION.md` — native crash Phase 2 details (embedded in FIX-PACK.md)
+- `CF-524-FIX.md` — Cloudflare proxy timeout fix
+- `AUDIT-REPORT.md` — 7-phase final validation
+- `KNOWN-LIMITATIONS.md` — remaining concurrent-burst crash + fix options
